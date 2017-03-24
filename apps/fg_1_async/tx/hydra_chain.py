@@ -37,7 +37,7 @@ import threading
 
 from uhd_interface import uhd_transmitter
 
-hydra_center_frequency = 5.5e9
+hydra_center_frequency = 2.45e9
 vr1_initial_shift = -500e3
 vr2_initial_shift =  400e3
 
@@ -76,18 +76,18 @@ class my_top_block(gr.top_block):
         vr_configs = []
         vr_configs.append([options_vr1.freq, options_vr1.bandwidth])
         vr_configs.append([options_vr2.freq, options_vr2.bandwidth])
-        hydra_sink = hydra.hydra_sink(2,
+        self.hydra = hydra.hydra_async_sink(2,
                 options.fft_length,
                 int(options.tx_freq),
                 int(options.bandwidth),
                 vr_configs)
 
-        self.vr1_source = zeromq.pull_source(gr.sizeof_gr_complex, 1, options.vr1_input_ip, 100, False, -1)
-        self.vr2_source = zeromq.pull_source(gr.sizeof_gr_complex, 1, options.vr2_input_ip, 100, False, -1)
+        self.vr1_source = zeromq.sub_msg_source(options.vr1_input_ip, 100)
+        self.vr2_source = zeromq.sub_msg_source(options.vr2_input_ip, 100)
 
-        self.connect(self.vr1_source, (hydra_sink, 0), self.sink)
-        self.connect(self.vr2_source, (hydra_sink, 1))
-        self.hydra = hydra_sink
+        self.msg_connect(self.vr1_source, 'out', self.hydra, 'vr0')
+        self.msg_connect(self.vr2_source, 'out', self.hydra, 'vr1')
+        self.connect(self.hydra, self.sink)
 
         self.xmlrpc_server = SimpleXMLRPCServer.SimpleXMLRPCServer(("localhost", 12345), allow_none=True)
         self.xmlrpc_server.register_instance(self)
