@@ -110,9 +110,7 @@ class my_top_block(gr.top_block):
             self.connect(self.txpath1, tagger1, pduer1)
             self.connect(self.txpath2, tagger2, pduer2)
 
-            import foo
-            padder = foo.packet_pad(False, False, 0.01, 100, 1000)
-            self.connect(self.hydra, padder, self.sink)
+            self.connect(self.hydra, self.sink)
 
             self.msg_connect(pduer1, 'pdus', self.hydra, 'vr0')
             self.msg_connect(pduer2, 'pdus', self.hydra, 'vr1')
