@@ -26,6 +26,7 @@
 #include <gnuradio/io_signature.h>
 
 #include <string.h>
+#include <iostream>
 
 namespace gr {
    namespace hydra {
@@ -77,17 +78,14 @@ hydra_async_sink::~hydra_async_sink()
 void
 hydra_async_sink::handle_msg(pmt::pmt_t val, size_t radio_id)
 {
-   std::vector<gr_complex> xv;
-
    // If pair, get the value
    if(pmt::is_pair(val))
         val = pmt::cdr(val);
 
+	assert(pmt::is_c32vector(val));
+
    //  get elements
-   if(pmt::is_c32vector(val))
-   {
-        xv = pmt::c32vector_elements(val);
-   }
+   std::vector<gr_complex> xv = pmt::c32vector_elements(val);
 
    g_hypervisor->get_vradio(radio_id)->add_iq_sample(
       (const gr_complex *) &xv[0], xv.size());
@@ -102,7 +100,7 @@ hydra_async_sink::general_work(int noutput_items,
    // Gen output
    int t = g_hypervisor->tx_outbuf(output_items, noutput_items);
 
-   return t;
+	return t;
 }
 
 } /* namespace hydra */

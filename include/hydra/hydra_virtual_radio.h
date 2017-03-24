@@ -113,12 +113,18 @@ class SVL_API VirtualRadio
 
 		/**
 		 * @param samples_buf
+		 * @return Number of samples inserted in samples_buf
 		 */
-		bool map_iq_samples(gr_complex *samples_buf);
+		size_t map_iq_samples(gr_complex *samples_buf);
 
 		/**
 		 */
 		bool const ready_to_map_iq_samples();
+
+
+		/**
+		 */
+		size_t const get_tx_buff_size(){ return g_tx_samples.size(); }
 };
 
 /* TYPEDEFS for this class */

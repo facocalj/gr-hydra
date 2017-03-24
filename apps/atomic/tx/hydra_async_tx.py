@@ -21,6 +21,7 @@
 # Boston, MA 02110-1301, USA.
 # 
 
+
 # GNURadio blocks
 from gnuradio import gr
 from gnuradio.eng_option import eng_option
@@ -76,6 +77,8 @@ class my_top_block(gr.top_block):
         # do this after for any adjustments to the options that may
         # occur in the sinks (specifically the UHD sink)
         self.txpath1 = TransmitPath(options_vr1)
+        tagger1 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8064, "packet_len")
+        pduer1 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
 
         vr_configs = []
         vr_configs.append([options_vr1.freq, options_vr1.bandwidth])
@@ -83,24 +86,36 @@ class my_top_block(gr.top_block):
 
         if options.one_virtual_radio is True:
             print("Creating 1 VR")
-            hydra_sink = hydra.hydra_sink(1,
+            self.hydra = hydra.hydra_async_sink(1,
                                     options.fft_length,
                                     int(options.tx_freq),
                                     int(options.bandwidth),
                                     vr_configs)
-            self.connect(self.txpath1, hydra_sink, self.sink)
-            self.hydra = hydra_sink
+
+            self.connect(self.txpath1, tagger1, pduer1)
+            self.connect(self.hydra, self.sink)
+            self.msg_connect(pduer1, 'pdus', self.hydra, 'vr0')
         else:
             print("Creating 2 VRs")
             self.txpath2 = TransmitPath(options_vr2)
-            hydra_sink = hydra.hydra_sink(2,
+            tagger2 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8064, "packet_len")
+            pduer2 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
+
+            self.hydra = hydra.hydra_async_sink(2,
                                     options.fft_length,
                                     int(options.tx_freq),
                                     int(options.bandwidth),
                                     vr_configs)
-            self.connect(self.txpath1, (hydra_sink, 0), self.sink)
-            self.connect(self.txpath2, (hydra_sink, 1))
-            self.hydra = hydra_sink
+
+            self.connect(self.txpath1, tagger1, pduer1)
+            self.connect(self.txpath2, tagger2, pduer2)
+
+            import foo
+            padder = foo.packet_pad(False, False, 0.01, 100, 1000)
+            self.connect(self.hydra, padder, self.sink)
+
+            self.msg_connect(pduer1, 'pdus', self.hydra, 'vr0')
+            self.msg_connect(pduer2, 'pdus', self.hydra, 'vr1')
 
 	print 'Start XMLRPC Server ...'
         self.xmlrpc_server = SimpleXMLRPCServer.SimpleXMLRPCServer(("localhost", 12345), allow_none=True)

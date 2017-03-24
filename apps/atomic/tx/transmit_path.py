@@ -28,9 +28,9 @@ import sys
 import threading
 import struct
 import logging
+import time
 
 import SimpleXMLRPCServer
-
 
 class XMLRPCThread(threading.Thread):
     def __init__(self, ipaddr, buffersize, tx_path):
@@ -59,11 +59,15 @@ class XMLRPCThread(threading.Thread):
             data = s.recv(options.bufferbytes)
             """
             data = struct.pack('!H', 0xaaaa) + str(self._value) + " ".join(["" for x in range(400)])
+
             payload = data
             self._tx_path.send_pkt(payload)
             n += len(payload)
 
             pktno += 1
+
+            print "*"
+            time.sleep(0.5)
 
         logging.info("tx_bytes = %d,\t tx_pkts = %d" % (n, pktno))
         self._tx_path.send_pkt(eof=True)
@@ -105,11 +109,13 @@ class ReadThread(threading.Thread):
                 data = f.read(self._buffersize)
 
             # transmit the same pkt 2 times. Receiver can throw away one in case of errors
+            print "."
             payload = struct.pack('!H', 0xffff & 0) + data
             self._tx_path.send_pkt(payload)
+            #payload = struct.pack('!H', 0xffff & 1) + data
+            #self._tx_path.send_pkt(payload)
 
-            payload = struct.pack('!H', 0xffff & 1) + data
-            self._tx_path.send_pkt(payload)
+            time.sleep(1)
 
             n += len(payload)
 
@@ -137,11 +143,12 @@ class TransmitPath(gr.hier_block2):
         self._tx_amplitude = options.tx_amplitude
 
         self.ofdm_tx = ofdm_mod(options,
-                                msgq_limit=4,
-                                pad_for_usrp=False)
+                                msgq_limit=1,
+                                pad_for_usrp=True)
 
         self.amp = blocks.multiply_const_cc(1)
         self.set_tx_amplitude(self._tx_amplitude)
+
 
         # Create and setup transmit path flow graph
         self.connect(self.ofdm_tx, self.amp, self)

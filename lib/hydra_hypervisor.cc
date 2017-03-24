@@ -1,6 +1,7 @@
 #include "hydra/hydra_hypervisor.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace gr {
    namespace hydra {
@@ -86,15 +87,17 @@ Hypervisor::forecast(int noutput_items,
 {
    size_t ninput = ninput_items_required.size();
 
-   //LOG_IF(ninput != g_vradios.size(), ERROR);
-
    int factor = noutput_items / fft_m_len;
 
    for (size_t i = 0; i < ninput; ++i)
 	{
       ninput_items_required[i] = g_vradios[i]->get_subcarriers() * factor;
-	}
 
+		if (ninput_items_required[i] < g_vradios[i]->get_tx_buff_size())
+		  ninput_items_required[i] = 0;
+		else if (ninput_items_required[i] > g_vradios[i]->get_tx_buff_size())
+		  ninput_items_required[i] -= g_vradios[i]->get_tx_buff_size();
+	}
 }
 
 #if 0
@@ -223,6 +226,7 @@ Hypervisor::tx_ready()
       if ((*it)->ready_to_map_iq_samples())
          return true;
    }
+
    return false;
 }
 
@@ -236,7 +240,7 @@ Hypervisor::tx_outbuf(gr_vector_void_star &output_items, size_t max_noutput_item
 
    // For each VirtualRadio call the map_iq_samples
    // func passing our buffer as parameter
-   while (tx_ready() && noutput_items < max_noutput_items)
+   while (noutput_items < max_noutput_items)
    {
       for (vradio_vec::iterator it = g_vradios.begin();
             it != g_vradios.end();
@@ -245,28 +249,29 @@ Hypervisor::tx_outbuf(gr_vector_void_star &output_items, size_t max_noutput_item
          (*it)->map_iq_samples(g_ifft_complex->get_inbuf());
       }
 
-
-      for (size_t i = 0; i < g_subcarriers_map.size(); ++i)
-      {
-         if (g_subcarriers_map[i] == -1)
+		for (size_t i = 0; i < g_subcarriers_map.size(); ++i)
+		{
+			if (g_subcarriers_map[i] == -1)
 			{
-            g_ifft_complex->get_inbuf()[i] = gr_complex(0, 0);
-         }
-      }
+				g_ifft_complex->get_inbuf()[i] = gr_complex(0, 0);
+			}
+		}
 
-      std::rotate(g_ifft_complex->get_inbuf(),
-            g_ifft_complex->get_inbuf() + fft_m_len/2,
-            g_ifft_complex->get_inbuf() + fft_m_len);
+		std::rotate(g_ifft_complex->get_inbuf(),
+				g_ifft_complex->get_inbuf() + fft_m_len/2,
+				g_ifft_complex->get_inbuf() + fft_m_len);
 
-      // Transform buffer from FREQ domain to TIME domain using IFFT
-      g_ifft_complex->execute();
+		// Transform buffer from FREQ domain to TIME domain using IFFT
+		g_ifft_complex->execute();
 
-      std::copy(g_ifft_complex->get_outbuf(),
-            g_ifft_complex->get_outbuf() + fft_m_len,
-            optr);
+		g_ifft_complex->execute();
+		std::copy(g_ifft_complex->get_outbuf(),
+				g_ifft_complex->get_outbuf() + fft_m_len,
+				optr);
 
-      optr += fft_m_len;
-      noutput_items += fft_m_len;
+		optr += fft_m_len;
+		noutput_items += fft_m_len;
+
    }
 
    return noutput_items;
@@ -344,10 +349,9 @@ Hypervisor::rx_outbuf(gr_complex *output_items, size_t max_noutput_items)
          (*it)->get_rx_samples(&output_items[idx], fft_m_len);
       }
 
-
-
       noutput_items++;
    }
+
 
    return noutput_items;
 }

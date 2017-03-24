@@ -44,6 +44,7 @@
     <name>vr</name>
     <type>message</type>
     <nports>$num_inputs</nports>
+    <optional>1</optional>
   </sink>
  
   <source>
