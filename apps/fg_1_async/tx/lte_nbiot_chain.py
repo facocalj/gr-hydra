@@ -69,11 +69,13 @@ class my_top_block(gr.top_block):
         # occur in the sinks (specifically the UHD sink)
         self.txpath = TransmitPath(options)
 
-        self.sink   = zeromq.push_sink(gr.sizeof_gr_complex, 1, options.next_container_ip, 100, False, -1)
         tagger = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, options.buffersize, "packet_len")
         pduer = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
+        self.sink   = zeromq.pub_msg_sink('tcp://' + options.host_ip, 100)
 
-        self.connect(self.txpath, tagger, pduer, self.sink)
+        self.connect(self.txpath, tagger, pduer)
+        self.msg_connect(pduer, 'pdus', self.sink, 'in')
+
 
     def set_gain(self, gain):
         print("called: set_gain")
@@ -143,6 +145,7 @@ def main():
 
     # build the graph
     options_vr1 = dict2obj({'tx_amplitude': options.vr1_tx_amplitude,
+                            'host_ip': options.host_ip,
                             'next_container_ip': options.vr1_next_container_ip,
                             'freq': options.vr1_freq,
                             'bandwidth': options.vr1_bandwidth,
@@ -156,6 +159,7 @@ def main():
                             'verbose': False,
                             'log': False})
     options_vr2 = dict2obj({'tx_amplitude': options.vr2_tx_amplitude,
+                            'host_ip': options.host_ip,
                             'next_container_ip': options.vr2_next_container_ip,
                             'freq': options.vr2_freq,
                             'bandwidth': options.vr2_bandwidth,
