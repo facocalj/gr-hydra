@@ -129,7 +129,7 @@ def main():
             help="set transmitter digital amplitude: 0 <= AMPL < 1.0 [default=%default]")
     vr2_options.add_option("", "--vr2-file", type="string", default='/home/ctvr/.wishful/radio/vr2fifo',
             help="set the file to obtain data [default=%default]")
-    vr2_options.add_option("", "--vr2-buffersize", type="intx", default=3072,
+    vr2_options.add_option("", "--vr2-buffersize", type="intx", default=64,
             help="set number of bytes to read from buffer size for VR2 [default=%default]")
     vr2_options.add_option("-m", "--vr2-modulation", type="string", default="bpsk",
             help="set modulation type (bpsk, qpsk, 8psk, qam{16,64}) [default=%default]")
