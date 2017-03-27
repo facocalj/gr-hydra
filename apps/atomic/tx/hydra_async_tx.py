@@ -44,6 +44,8 @@ hydra_center_frequency = 2.45e9 # SBX
 vr1_initial_shift = -500e3
 vr2_initial_shift =  400e3
 
+import numpy as np
+
 
 # For a nested dict, you need to recursively update __dict__
 def dict2obj(d):
@@ -59,6 +61,32 @@ def dict2obj(d):
         for k in d:
             o.__dict__[k] = dict2obj(d[k])
         return o
+
+class SinkInputCounter(gr.sync_block):
+
+    def __init__(self, _type):
+        gr.sync_block.__init__(self,
+                name="sink",
+                in_sig=[_type],
+                out_sig=[_type])
+
+        self.tsamples = 0
+
+    def reset(self):
+        print "------------------------------"
+        print '| Samples received: ' + str(self.tsamples)
+        print "------------------------------"
+        self.tsamples =0
+
+    def work(self, input_items, output_items):
+        in0 = input_items[0]
+        out0 = output_items[0]
+        for i in in0:
+            self.tsamples += 1
+        out0[:] = in0
+
+        return len(in0)
+
 
 class my_top_block(gr.top_block):
     def __init__(self, options, options_vr1, options_vr2):
@@ -77,7 +105,9 @@ class my_top_block(gr.top_block):
         # do this after for any adjustments to the options that may
         # occur in the sinks (specifically the UHD sink)
         self.txpath1 = TransmitPath(options_vr1)
-        tagger1 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8064, "packet_len")
+
+        self.counter1 = SinkInputCounter(np.complex64)
+        tagger1 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8000, "packet_len")
         pduer1 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
 
         vr_configs = []
@@ -92,13 +122,14 @@ class my_top_block(gr.top_block):
                                     int(options.bandwidth),
                                     vr_configs)
 
-            self.connect(self.txpath1, tagger1, pduer1)
+            self.connect(self.txpath1, self.counter1, tagger1, pduer1)
             self.connect(self.hydra, self.sink)
             self.msg_connect(pduer1, 'pdus', self.hydra, 'vr0')
         else:
             print("Creating 2 VRs")
             self.txpath2 = TransmitPath(options_vr2)
-            tagger2 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8064, "packet_len")
+            self.counter2 = SinkInputCounter(np.complex64)
+            tagger2 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8000, "packet_len")
             pduer2 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
 
             self.hydra = hydra.hydra_async_sink(2,
@@ -107,8 +138,8 @@ class my_top_block(gr.top_block):
                                     int(options.bandwidth),
                                     vr_configs)
 
-            self.connect(self.txpath1, tagger1, pduer1)
-            self.connect(self.txpath2, tagger2, pduer2)
+            self.connect(self.txpath1, self.counter1, tagger1, pduer1)
+            self.connect(self.txpath2, self.counter2, tagger2, pduer2)
 
             self.connect(self.hydra, self.sink)
 
@@ -208,7 +239,7 @@ def main():
                            help="set transmitter digital amplitude: 0 <= AMPL < 1.0 [default=%default]")
     vr2_options.add_option("", "--vr2-file", type="string", default='/home/ctvr/.wishful/radio/vr2fifo',
                       help="set the file to obtain data [default=%default]")
-    vr2_options.add_option("", "--vr2-buffersize", type="intx", default=3072,
+    vr2_options.add_option("", "--vr2-buffersize", type="intx", default=64,
                            help="set number of bytes to read from buffer size for VR2 [default=%default]")
     vr2_options.add_option("-m", "--vr2-modulation", type="string", default="bpsk",
                            help="set modulation type (bpsk, qpsk, 8psk, qam{16,64}) [default=%default]")
@@ -260,12 +291,12 @@ def main():
     tb.start()                       # start flow graph
 
     print 'Starting VR1 data thread...'
-    t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1)
+    t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True, tb.counter1)
     t1.start()
 
     if options.one_virtual_radio == False:
         print 'Starting VR2 data thread...'
-        t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath2)
+        t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath2, tb.counter2)
         t2.start()
 
     print 'Starting'
