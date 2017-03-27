@@ -68,7 +68,7 @@ class XMLRPCThread(threading.Thread):
             pktno += 1
 
             print "*"
-            time.sleep(0.5)
+            time.sleep(1)
 
         logging.info("tx_bytes = %d,\t tx_pkts = %d" % (n, pktno))
         self._tx_path.send_pkt(eof=True)
@@ -130,7 +130,6 @@ class ReadThread(threading.Thread):
         self._tx_path.send_pkt(eof=True)
         f.close()
 
-
 # /////////////////////////////////////////////////////////////////////////////
 #                              transmit path
 # /////////////////////////////////////////////////////////////////////////////
@@ -152,7 +151,6 @@ class TransmitPath(gr.hier_block2):
 
         self.amp = blocks.multiply_const_cc(1)
         self.set_tx_amplitude(self._tx_amplitude)
-
 
         # Create and setup transmit path flow graph
         self.connect(self.ofdm_tx, self.amp, self)

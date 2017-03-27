@@ -100,9 +100,9 @@ hydra_async_sink::general_work(int noutput_items,
    // Gen output
    int t = g_hypervisor->tx_outbuf(output_items, noutput_items);
 
-	if (t < noutput_items) memset(&output_items[t+1], 0, noutput_items - t);
+	if (t < noutput_items) memset(&output_items[t], 0, noutput_items);
 
-	return t;
+	return noutput_items;
 }
 
 } /* namespace hydra */

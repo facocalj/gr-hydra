@@ -271,7 +271,6 @@ Hypervisor::tx_outbuf(gr_vector_void_star &output_items, size_t max_noutput_item
 
 		optr += fft_m_len;
 		noutput_items += fft_m_len;
-
    }
 
    return noutput_items;
