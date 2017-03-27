@@ -77,7 +77,7 @@ class my_top_block(gr.top_block):
         # do this after for any adjustments to the options that may
         # occur in the sinks (specifically the UHD sink)
         self.txpath1 = TransmitPath(options_vr1)
-        tagger1 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8064, "packet_len")
+        tagger1 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 128, "packet_len")
         pduer1 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
 
         vr_configs = []
@@ -98,7 +98,7 @@ class my_top_block(gr.top_block):
         else:
             print("Creating 2 VRs")
             self.txpath2 = TransmitPath(options_vr2)
-            tagger2 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8064, "packet_len")
+            tagger2 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 128, "packet_len")
             pduer2 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
 
             self.hydra = hydra.hydra_async_sink(2,
