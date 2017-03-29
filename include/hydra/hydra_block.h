@@ -21,6 +21,7 @@
 #define INCLUDED_SVL_SVL_BLOCK_H
 
 #include <gnuradio/block.h>
+#include <gnuradio/sync_block.h>
 
 #include <hydra/api.h>
 #include <hydra/types.h>
@@ -29,7 +30,7 @@
 namespace gr {
    namespace hydra {
 
-class SVL_API hydra_block: virtual public gr::block
+class SVL_API hydra_block: virtual public sync_block
 {
    protected:
       hypervisor_ptr g_hypervisor;
@@ -61,11 +62,15 @@ class SVL_API hydra_block: virtual public gr::block
 				  return g_hypervisor.get();
 		}
 
+		int work(int noutput_items,
+              gr_vector_const_void_star &input_items,
+              gr_vector_void_star &output_items){};
+
 		/**
 		 * @param noutput_items
 		 * @param ninput_items_required
 		 */
-		void forecast(int noutput_items,gr_vector_int &ninput_items_required)
+		void forecast(int noutput_items, gr_vector_int &ninput_items_required)
 		{
 			return g_hypervisor->forecast(noutput_items,
 					ninput_items_required);

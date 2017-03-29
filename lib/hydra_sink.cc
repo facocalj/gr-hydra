@@ -49,7 +49,7 @@ hydra_sink::hydra_sink(size_t _n_inputs,
 		double central_frequency,
 		double bandwidth,
       const std::vector< std::vector<double> > vradio_conf):
-			gr::block("hydra_sink",
+			gr::sync_block("hydra_sink",
    				gr::io_signature::make(_n_inputs,
 							  _n_inputs, sizeof(gr_complex)),
    				gr::io_signature::make(1, 1, sizeof(gr_complex))),
@@ -68,20 +68,22 @@ hydra_sink::~hydra_sink()
 }
 
 int
-hydra_sink::general_work(int noutput_items,
-      gr_vector_int &ninput_items,
+hydra_sink::work(int noutput_items,
       gr_vector_const_void_star &input_items,
       gr_vector_void_star &output_items)
 {
    // forward to hypervisor
-   g_hypervisor->tx_add_samples(noutput_items, ninput_items, input_items);
+   gr_vector_int tmp = gr_vector_int(input_items.size());
+   g_hypervisor->tx_add_samples(noutput_items, tmp, input_items);
 
 	// Gen output
    int t =  g_hypervisor->tx_outbuf(output_items, noutput_items);
 
    // Consume the items in the input port i
+#if 0
    for (size_t i = 0; i < ninput_items.size(); ++i)
       consume(i, ninput_items[i]);
+#endif
 
 	return t;
 }

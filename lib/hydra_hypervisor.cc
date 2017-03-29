@@ -273,6 +273,17 @@ Hypervisor::tx_outbuf(gr_vector_void_star &output_items, size_t max_noutput_item
 		noutput_items += fft_m_len;
    }
 
+#if 0
+	if (noutput_items == max_noutput_items && tx_ready())
+	{
+			  std::cout << "skiped some samples" << std::endl;
+	}
+	else
+	{
+			  std::cout << "nothing to send" << std::endl;
+	}
+#endif
+
    return noutput_items;
 }
 

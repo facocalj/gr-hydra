@@ -31,6 +31,8 @@ class SVL_API VirtualRadio
 		// pointer to this VR hypervisor
 		Hypervisor &g_hypervisor;
 
+		bool d_pkt_en;
+
 	public:
 		/** CTOR
 		 * @param hypervisor
@@ -125,6 +127,12 @@ class SVL_API VirtualRadio
 		/**
 		 */
 		size_t const get_tx_buff_size(){ return g_tx_samples.size(); }
+
+
+		/**
+		 */
+		void en_pkt() { d_pkt_en = true;}
+		void dis_pkt() { d_pkt_en = false;}
 };
 
 /* TYPEDEFS for this class */

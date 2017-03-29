@@ -29,5 +29,4 @@ install(FILES
     hydra_block.h
     hydra_sink.h
     hydra_async_sink.h
-    hydra_source.h
 	 DESTINATION include/hydra)

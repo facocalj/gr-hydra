@@ -14,7 +14,6 @@
 #include "hydra/hydra_block.h"
 #include "hydra/hydra_sink.h"
 #include "hydra/hydra_async_sink.h"
-#include "hydra/hydra_source.h"
 %}
 
 %include "hydra/types.h"
@@ -30,7 +29,3 @@ GR_SWIG_BLOCK_MAGIC2(hydra, hydra_sink);
 %include "hydra/hydra_block.h"
 %include "hydra/hydra_async_sink.h"
 GR_SWIG_BLOCK_MAGIC2(hydra, hydra_async_sink);
-
-%include "hydra/hydra_source.h"
-GR_SWIG_BLOCK_MAGIC2(hydra, hydra_source);
-

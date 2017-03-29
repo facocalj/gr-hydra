@@ -50,7 +50,7 @@ hydra_async_sink::hydra_async_sink(size_t _n_inputs,
       double central_frequency,
       double bandwidth,
       const std::vector< std::vector<double> > vradio_conf):
-         gr::block("hydra_sink",
+         gr::sync_block("hydra_sink",
                gr::io_signature::make(0, 0, 0),
                gr::io_signature::make(1, 1, sizeof(gr_complex))),
          hydra_block(_n_inputs, _fft_m_len, central_frequency, bandwidth)
@@ -92,17 +92,21 @@ hydra_async_sink::handle_msg(pmt::pmt_t val, size_t radio_id)
 }
 
 int
-hydra_async_sink::general_work(int noutput_items,
-      gr_vector_int &ninput_items,
+hydra_async_sink::work(int noutput_items,
       gr_vector_const_void_star &input_items,
       gr_vector_void_star &output_items)
 {
    // Gen output
-   int t = g_hypervisor->tx_outbuf(output_items, noutput_items);
+   long t = g_hypervisor->tx_outbuf(output_items, noutput_items);
 
-	if (t < noutput_items) memset(&output_items[t], 0, noutput_items);
+	//if (t < noutput_items) memset(&output_items[t], 0, noutput_items - t );
 
-	return noutput_items;
+	add_item_tag(0,
+		  nitems_written(0) + t,
+		  pmt::string_to_symbol("burst_len"),
+		  pmt::from_long(t));
+
+	return t;
 }
 
 } /* namespace hydra */

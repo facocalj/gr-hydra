@@ -46,6 +46,9 @@ VirtualRadio::set_bandwidth(double bw)
 void
 VirtualRadio::add_iq_sample(const gr_complex *samples, size_t len)
 {
+   if (!d_pkt_en)
+		  std::cout << "received samples without packet enabled" << std::endl;
+
    g_tx_samples.insert(g_tx_samples.end(), &samples[0], &samples[len]);
 }
 
