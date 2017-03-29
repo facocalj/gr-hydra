@@ -106,8 +106,7 @@ class my_top_block(gr.top_block):
         # occur in the sinks (specifically the UHD sink)
         self.txpath1 = TransmitPath(options_vr1)
 
-        self.counter1 = SinkInputCounter(np.complex64)
-        tagger1 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8000, "packet_len")
+        tagger1 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 1280, "packet_len")
         pduer1 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
 
         vr_configs = []
@@ -122,14 +121,13 @@ class my_top_block(gr.top_block):
                                     int(options.bandwidth),
                                     vr_configs)
 
-            self.connect(self.txpath1, self.counter1, tagger1, pduer1)
+            self.connect(self.txpath1, tagger1, pduer1)
             self.connect(self.hydra, self.sink)
             self.msg_connect(pduer1, 'pdus', self.hydra, 'vr0')
         else:
             print("Creating 2 VRs")
             self.txpath2 = TransmitPath(options_vr2)
-            self.counter2 = SinkInputCounter(np.complex64)
-            tagger2 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 8000, "packet_len")
+            tagger2 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 1280, "packet_len")
             pduer2 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
 
             self.hydra = hydra.hydra_async_sink(2,
@@ -138,11 +136,13 @@ class my_top_block(gr.top_block):
                                     int(options.bandwidth),
                                     vr_configs)
 
-            self.connect(self.txpath1, self.counter1, tagger1, pduer1)
-            self.connect(self.txpath2, self.counter2, tagger2, pduer2)
+            self.connect(self.txpath1, tagger1, pduer1)
+            self.connect(self.txpath2, tagger2, pduer2)
 
-            self.connect(self.hydra, self.sink)
+            import foo, pmt
+            bt = foo.burst_tagger(pmt.intern("burst_len"), 1)
 
+            self.connect(self.hydra, bt, self.sink)
             self.msg_connect(pduer1, 'pdus', self.hydra, 'vr0')
             self.msg_connect(pduer2, 'pdus', self.hydra, 'vr1')
 
@@ -225,7 +225,7 @@ def main():
             help="set modulation type (bpsk, qpsk, 8psk, qam{16,64}) [default=%default]")
     vr1_options.add_option("", "--vr1-fft-length", type="intx", default=512,
             help="set the number of FFT bins [default=%default]")
-    vr1_options.add_option("", "--vr1-occupied-tones", type="intx", default=200,
+    vr1_options.add_option("", "--vr1-occupied-tones", type="intx", default=512,
             help="set the number of occupied FFT bins [default=%default]")
     vr1_options.add_option("", "--vr1-cp-length", type="intx", default=128,
             help="set the number of bits in the cyclic prefix [default=%default]")
@@ -245,7 +245,7 @@ def main():
                            help="set modulation type (bpsk, qpsk, 8psk, qam{16,64}) [default=%default]")
     vr2_options.add_option("", "--vr2-fft-length", type="intx", default=64,
                            help="set the number of FFT bins [default=%default]")
-    vr2_options.add_option("", "--vr2-occupied-tones", type="intx", default=48,
+    vr2_options.add_option("", "--vr2-occupied-tones", type="intx", default=64,
                            help="set the number of occupied FFT bins [default=%default]")
     vr2_options.add_option("", "--vr2-cp-length", type="intx", default=2,
                            help="set the number of bits in the cyclic prefix [default=%default]")
@@ -291,12 +291,12 @@ def main():
     tb.start()                       # start flow graph
 
     print 'Starting VR1 data thread...'
-    t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True, tb.counter1)
+    t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True, tb.hydra.get_hypervisor().get_vradio(0))
     t1.start()
 
     if options.one_virtual_radio == False:
         print 'Starting VR2 data thread...'
-        t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath2, tb.counter2)
+        t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath2)
         t2.start()
 
     print 'Starting'

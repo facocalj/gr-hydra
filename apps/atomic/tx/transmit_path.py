@@ -33,7 +33,7 @@ import time
 import SimpleXMLRPCServer
 
 class XMLRPCThread(threading.Thread):
-    def __init__(self, ipaddr, buffersize, tx_path, counter):
+    def __init__(self, ipaddr, buffersize, tx_path, vradio = None):
         threading.Thread.__init__(self)
 
         self._value = 70
@@ -41,7 +41,6 @@ class XMLRPCThread(threading.Thread):
         self._tx_path = tx_path
         self._run = True
         self.xmlrpc_server = SimpleXMLRPCServer.SimpleXMLRPCServer((ipaddr, 22345), allow_none=True)
-        self.counter = counter
 
         self.xmlrpc_server.register_instance(self)
         threading.Thread(target=self.xmlrpc_server.serve_forever).start()
@@ -76,12 +75,12 @@ class XMLRPCThread(threading.Thread):
 
 
 class ReadThread(threading.Thread):
-    def __init__(self, filename, buffersize, tx_path, read_from_beginning = False, counter = None):
+    def __init__(self, filename, buffersize, tx_path, read_from_beginning = False, vradio = None):
 
         threading.Thread.__init__(self)
 
         self._run = True
-        self.counter = counter
+        self._vradio = vradio
         self._filename = filename
         self._buffersize = buffersize
         self._tx_path = tx_path
@@ -114,17 +113,14 @@ class ReadThread(threading.Thread):
             print "."
             payload = struct.pack('!H', 0xffff & 0) + data
             self._tx_path.send_pkt(payload)
-            #payload = struct.pack('!H', 0xffff & 1) + data
-            #self._tx_path.send_pkt(payload)
 
-            time.sleep(1)
-            if self.counter is not None:
-                self.counter.reset()
 
             n += len(payload)
 
             pktno += 1
             pktno %= 2
+
+            time.sleep(0.5)
 
         logging.info("tx_bytes = %d,\t tx_pkts = %d" % (n, pktno))
         self._tx_path.send_pkt(eof=True)
