@@ -62,6 +62,7 @@ def dict2obj(d):
             o.__dict__[k] = dict2obj(d[k])
         return o
 
+
 class my_top_block(gr.top_block):
     def __init__(self, options, options_vr1, options_vr2):
         gr.top_block.__init__(self)
@@ -84,13 +85,13 @@ class my_top_block(gr.top_block):
         # do this after for any adjustments to the options that may
         # occur in the sinks (specifically the UHD sink)
         self.txpath1 = TransmitPath(options_vr1 if options.lte_radio else options_vr2)
+
         self.connect(self.txpath1, self.sink)
 
 	print 'Start XMLRPC Server ...'
         self.xmlrpc_server = SimpleXMLRPCServer.SimpleXMLRPCServer(("localhost", 12345), allow_none=True)
         self.xmlrpc_server.register_instance(self)
         threading.Thread(target=self.xmlrpc_server.serve_forever).start()
-
 
 t1 = None
 
@@ -104,12 +105,12 @@ def main():
     global_options.add_option("", "--host-ip", type="string", default="localhost",
             help="This host command interface IP address [default=%default]")
 
-    hydra_options = parser.add_option_group("Global Options")
-    hydra_options.add_option("", "--lte-radio", action="store_true", default=False,
-                             help="Run with VR1 (LTE) [default=%default]")
-    hydra_options.add_option("", "--nbiot-radio", action="store_true", default=False,
-                             help="Run with VR2 (NB-IoT) [default=%default]")
-    hydra_options.add_option("", "--file-sink",
+    global_options = parser.add_option_group("Global Options")
+    global_options.add_option("", "--lte-radio", action="store_true", default=False,
+                              help="Run with VR1 (LTE) [default=%default]")
+    global_options.add_option("", "--nbiot-radio", action="store_true", default=False,
+                              help="Run with VR2 (NB-IoT) [default=%default]")
+    global_options.add_option("", "--file-sink",
             action="store_true", default=False, help="Do not use USRP as sink. Use file instead [default=%default]")
 
 

@@ -62,32 +62,6 @@ def dict2obj(d):
             o.__dict__[k] = dict2obj(d[k])
         return o
 
-class SinkInputCounter(gr.sync_block):
-
-    def __init__(self, _type):
-        gr.sync_block.__init__(self,
-                name="sink",
-                in_sig=[_type],
-                out_sig=[_type])
-
-        self.tsamples = 0
-
-    def reset(self):
-        print "------------------------------"
-        print '| Samples received: ' + str(self.tsamples)
-        print "------------------------------"
-        self.tsamples =0
-
-    def work(self, input_items, output_items):
-        in0 = input_items[0]
-        out0 = output_items[0]
-        for i in in0:
-            self.tsamples += 1
-        out0[:] = in0
-
-        return len(in0)
-
-
 class my_top_block(gr.top_block):
     def __init__(self, options, options_vr1, options_vr2):
         gr.top_block.__init__(self)
@@ -104,47 +78,15 @@ class my_top_block(gr.top_block):
 
         # do this after for any adjustments to the options that may
         # occur in the sinks (specifically the UHD sink)
-        self.txpath1 = TransmitPath(options_vr1)
+        self.txpath1 = TransmitPath(options_vr1 if options.lte_radio else options.vr2)
 
         tagger1 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 1280, "packet_len")
         pduer1 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
 
-        vr_configs = []
-        vr_configs.append([options_vr1.freq, options_vr1.bandwidth])
-        vr_configs.append([options_vr2.freq, options_vr2.bandwidth])
+        import foo, pmt
+        bt = foo.burst_tagger(pmt.intern("burst_len"), 1)
 
-        if options.one_virtual_radio is True:
-            print("Creating 1 VR")
-            self.hydra = hydra.hydra_async_sink(1,
-                                    options.fft_length,
-                                    int(options.tx_freq),
-                                    int(options.bandwidth),
-                                    vr_configs)
-
-            self.connect(self.txpath1, tagger1, pduer1)
-            self.connect(self.hydra, self.sink)
-            self.msg_connect(pduer1, 'pdus', self.hydra, 'vr0')
-        else:
-            print("Creating 2 VRs")
-            self.txpath2 = TransmitPath(options_vr2)
-            tagger2 = blocks.stream_to_tagged_stream(gr.sizeof_gr_complex, 1, 1280, "packet_len")
-            pduer2 = blocks.tagged_stream_to_pdu(blocks.complex_t, "packet_len")
-
-            self.hydra = hydra.hydra_async_sink(2,
-                                    options.fft_length,
-                                    int(options.tx_freq),
-                                    int(options.bandwidth),
-                                    vr_configs)
-
-            self.connect(self.txpath1, tagger1, pduer1)
-            self.connect(self.txpath2, tagger2, pduer2)
-
-            import foo, pmt
-            bt = foo.burst_tagger(pmt.intern("burst_len"), 1)
-
-            self.connect(self.hydra, bt, self.sink)
-            self.msg_connect(pduer1, 'pdus', self.hydra, 'vr0')
-            self.msg_connect(pduer2, 'pdus', self.hydra, 'vr1')
+        self.connect(self.txpath1, tagger1, bt, self.sink)
 
 	print 'Start XMLRPC Server ...'
         self.xmlrpc_server = SimpleXMLRPCServer.SimpleXMLRPCServer(("localhost", 12345), allow_none=True)
@@ -152,40 +94,7 @@ class my_top_block(gr.top_block):
         threading.Thread(target=self.xmlrpc_server.serve_forever).start()
 
 
-    def set_vr1_gain(self, gain):
-        print("called: set_vr1_gain")
-        return self.txpath1.set_tx_amplitude(gain)
-
-    def set_vr1_center_freq(self, cf):
-        print("called: set_vr1_cf")
-        return self.hydra.get_hypervisor().get_vradio(0).set_central_frequency(hydra_center_frequency+cf)
-
-    def set_vr2_center_freq(self, cf):
-        print("called: set_vr2_cf")
-        return self.hydra.get_hypervisor().get_vradio(1).set_central_frequency(hydra_center_frequency+cf)
-
-    def set_vr2_gain(self, gain):
-        print("called: set_vr2_gain")
-        return self.txpath2.set_tx_amplitude(gain)
-
-    def set_vr1_bandwidth(self, bandwidth):
-        print("called: set_vr1_bandwidth")
-        return self.hydra.get_hypervisor().get_vradio(0).set_bandwidth(bandwidth)
-
-    def set_vr2_bandwidth(self, bandwidth):
-        print("called: set_vr2_bandwidth")
-        return self.hydra.get_hypervisor().get_vradio(1).set_bandwidth(bandwidth)
-
-    def get_hydra_center_freq(self):
-        print("called: get_hydra_center_freq")
-        return self.sink.get_freq()
-
-    def get_hydra_bandwidth(self):
-        print("called: get_hydra_bandwidth")
-        return self.sink.get_sample_rate()
-
 t1 = None
-t2 = None
 
 # /////////////////////////////////////////////////////////////////////////////
 #                                   main
@@ -197,18 +106,16 @@ def main():
     global_options = parser.add_option_group("Host Options")
     global_options.add_option("", "--host-ip", type="string", default="localhost",
             help="This host command interface IP address [default=%default]")
-
-    hydra_options = parser.add_option_group("HyDRA Options")
-    hydra_options.add_option("-2", "--one-virtual-radio",
-            action="store_true", default=False, help="Run with ONE virtual radio instead [default=%default]")
-    hydra_options.add_option("", "--file-sink",
+    global_options.add_option("", "--file-sink",
             action="store_true", default=False, help="Do not use USRP as sink. Use file instead [default=%default]")
-    hydra_options.add_option("", "--fft-length", type="intx", default=5120,
-            help="HyDRA FFT M size [default=%default]")
+
+    hydra_options = parser.add_option_group("Options")
+    hydra_options.add_option("", "--vr1-radio", action="store_true", default=True,
+                             help="Run with LTE radio [default=%default]")
+    hydra_options.add_option("", "--vr2-radio", action="store_true", default=False,
+                             help="Run with NB-IoT radio [default=%default]")
     parser.add_option("", "--tx-freq", type="eng_float", default=hydra_center_frequency,
-            help="Hydra transmit frequency [default=%default]", metavar="FREQ")
-    parser.add_option("-W", "--bandwidth", type="eng_float", default=4e6,
-            help="Hydra sample_rate [default=%default]")
+            help="Hydra center frequency [default=%default]", metavar="FREQ")
 
     vr1_options = parser.add_option_group("VR 1 Options")
     vr1_options.add_option("", "--vr1-bandwidth", type="eng_float", default=1e6,
@@ -290,11 +197,12 @@ def main():
     tb = my_top_block(options, options_vr1, options_vr2)
     tb.start()                       # start flow graph
 
-    print 'Starting VR1 data thread...'
-    t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True, tb.hydra.get_hypervisor().get_vradio(0))
-    t1.start()
 
-    if options.one_virtual_radio == False:
+    if options.lte_radio:
+        print 'Starting VR1 data thread...'
+        t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True, tb.hydra.get_hypervisor().get_vradio(0))
+        t1.start()
+    else :
         print 'Starting VR2 data thread...'
         t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath2)
         t2.start()

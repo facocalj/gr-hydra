@@ -113,7 +113,6 @@ class ReadThread(threading.Thread):
             payload = struct.pack('!H', 0xffff & 0) + data
             self._tx_path.send_pkt(payload)
 
-
             n += len(payload)
 
             pktno += 1
@@ -141,7 +140,7 @@ class TransmitPath(gr.hier_block2):
         self._tx_amplitude = options.tx_amplitude
 
         self.ofdm_tx = ofdm_mod(options,
-                                msgq_limit=1,
+                                msgq_limit=4,
                                 pad_for_usrp=True)
 
         self.amp = blocks.multiply_const_cc(1)
