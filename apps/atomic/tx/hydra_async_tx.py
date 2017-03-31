@@ -217,7 +217,7 @@ def main():
             help="set central frequency for VR 1 [default=%default]")
     vr1_options.add_option("", "--vr1-tx-amplitude", type="eng_float", default=0.1, metavar="AMPL",
             help="set transmitter digital amplitude: 0 <= AMPL < 1.0 [default=%default]")
-    vr1_options.add_option("", "--vr1-file", type="string", default='/home/ctvr/.wishful/radio/vr1fifo',
+    vr1_options.add_option("", "--vr1-file", type="string", default='../../vr1fifo',
             help="set the file to obtain data [default=%default]")
     vr1_options.add_option("", "--vr1-buffersize", type="intx", default=3072,
             help="set number of bytes to read from buffer size for VR1 [default=%default]")
@@ -237,7 +237,7 @@ def main():
                            help="set central frequency for VR 2 [default=%default]")
     vr2_options.add_option("", "--vr2-tx-amplitude", type="eng_float", default=0.125, metavar="AMPL",
                            help="set transmitter digital amplitude: 0 <= AMPL < 1.0 [default=%default]")
-    vr2_options.add_option("", "--vr2-file", type="string", default='/home/ctvr/.wishful/radio/vr2fifo',
+    vr2_options.add_option("", "--vr2-file", type="string", default='../../vr2fifo',
                       help="set the file to obtain data [default=%default]")
     vr2_options.add_option("", "--vr2-buffersize", type="intx", default=64,
                            help="set number of bytes to read from buffer size for VR2 [default=%default]")
@@ -265,6 +265,7 @@ def main():
     options_vr1 = dict2obj({'tx_amplitude': options.vr1_tx_amplitude,
                             'freq': options.vr1_freq,
                             'bandwidth': options.vr1_bandwidth,
+                            'sleep_time': 1,
                             'file': options.vr1_file,
                             'buffersize': options.vr1_buffersize,
                             'modulation': options.vr1_modulation,
@@ -277,6 +278,7 @@ def main():
     options_vr2 = dict2obj({'tx_amplitude': options.vr2_tx_amplitude,
                             'freq': options.vr2_freq,
                             'bandwidth': options.vr2_bandwidth,
+                            'sleep_time': 0.5,
                             'file': options.vr2_file,
                             'buffersize': options.vr2_buffersize,
                             'modulation': options.vr2_modulation,
@@ -291,12 +293,12 @@ def main():
     tb.start()                       # start flow graph
 
     print 'Starting VR1 data thread...'
-    t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True, tb.hydra.get_hypervisor().get_vradio(0))
+    t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True, options_vr1.sleep_time)
     t1.start()
 
     if options.one_virtual_radio == False:
         print 'Starting VR2 data thread...'
-        t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath2)
+        t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath2, options_vr2.sleep_time)
         t2.start()
 
     print 'Starting'

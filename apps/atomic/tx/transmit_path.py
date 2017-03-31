@@ -33,10 +33,11 @@ import time
 import SimpleXMLRPCServer
 
 class XMLRPCThread(threading.Thread):
-    def __init__(self, ipaddr, buffersize, tx_path, vradio = None):
+    def __init__(self, ipaddr, buffersize, tx_path, sleep_time = 0):
         threading.Thread.__init__(self)
 
         self._value = 70
+        self._sleep_time = sleep_time
         self._buffersize = buffersize
         self._tx_path = tx_path
         self._run = True
@@ -66,8 +67,8 @@ class XMLRPCThread(threading.Thread):
 
             pktno += 1
 
-            print "*"
-            time.sleep(1)
+            if self._sleep_time > 0:
+                time.sleep(1)
 
         logging.info("tx_bytes = %d,\t tx_pkts = %d" % (n, pktno))
         self._tx_path.send_pkt(eof=True)
@@ -75,13 +76,13 @@ class XMLRPCThread(threading.Thread):
 
 
 class ReadThread(threading.Thread):
-    def __init__(self, filename, buffersize, tx_path, read_from_beginning = False, vradio = None):
+    def __init__(self, filename, buffersize, tx_path, read_from_beginning = False, sleep_time = 0):
 
         threading.Thread.__init__(self)
 
         self._run = True
-        self._vradio = vradio
         self._filename = filename
+        self._sleep_time = sleep_time
         self._buffersize = buffersize
         self._tx_path = tx_path
         self._read = read_from_beginning
@@ -110,7 +111,6 @@ class ReadThread(threading.Thread):
                 data = f.read(self._buffersize)
 
             # transmit the same pkt 2 times. Receiver can throw away one in case of errors
-            print "."
             payload = struct.pack('!H', 0xffff & 0) + data
             self._tx_path.send_pkt(payload)
 
@@ -120,7 +120,8 @@ class ReadThread(threading.Thread):
             pktno += 1
             pktno %= 2
 
-            time.sleep(0.5)
+            if self._sleep_time > 0:
+                time.sleep(0.5)
 
         logging.info("tx_bytes = %d,\t tx_pkts = %d" % (n, pktno))
         self._tx_path.send_pkt(eof=True)

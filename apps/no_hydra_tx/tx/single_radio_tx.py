@@ -168,6 +168,7 @@ def main():
     # build the graph
     options_vr1 = dict2obj({'tx_amplitude': options.vr1_tx_amplitude,
                             'freq': options.vr1_freq,
+                            'sleep_time': 0,
                             'bandwidth': options.vr1_bandwidth,
                             'file': options.vr1_file,
                             'buffersize': options.vr1_buffersize,
@@ -180,6 +181,7 @@ def main():
                             'log': False})
     options_vr2 = dict2obj({'tx_amplitude': options.vr2_tx_amplitude,
                             'freq': options.vr2_freq,
+                            'sleep_time': 0,
                             'bandwidth': options.vr2_bandwidth,
                             'file': options.vr2_file,
                             'buffersize': options.vr2_buffersize,
@@ -197,11 +199,11 @@ def main():
 
     if options.lte_radio:
         print 'Starting VR1 data thread...'
-        t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True)
+        t1 = ReadThread(options_vr1.file, options_vr1.buffersize, tb.txpath1, True, options_vr1.sleep_time)
         t1.start()
     else:
         print 'Starting VR2 data thread...'
-        t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath1)
+        t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath1, options_vr2.sleep_time)
         t2.start()
 
     print 'Starting'

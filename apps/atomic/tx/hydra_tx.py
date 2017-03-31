@@ -173,7 +173,7 @@ def main():
             help="set central frequency for VR 1 [default=%default]")
     vr1_options.add_option("", "--vr1-tx-amplitude", type="eng_float", default=0.1, metavar="AMPL",
             help="set transmitter digital amplitude: 0 <= AMPL < 1.0 [default=%default]")
-    vr1_options.add_option("", "--vr1-file", type="string", default='/home/ctvr/.wishful/radio/vr1fifo',
+    vr1_options.add_option("", "--vr1-file", type="string", default='../../vr1fifo',
             help="set the file to obtain data [default=%default]")
     vr1_options.add_option("", "--vr1-buffersize", type="intx", default=3072,
             help="set number of bytes to read from buffer size for VR1 [default=%default]")
@@ -181,7 +181,7 @@ def main():
             help="set modulation type (bpsk, qpsk, 8psk, qam{16,64}) [default=%default]")
     vr1_options.add_option("", "--vr1-fft-length", type="intx", default=512,
             help="set the number of FFT bins [default=%default]")
-    vr1_options.add_option("", "--vr1-occupied-tones", type="intx", default=200,
+    vr1_options.add_option("", "--vr1-occupied-tones", type="intx", default=512,
             help="set the number of occupied FFT bins [default=%default]")
     vr1_options.add_option("", "--vr1-cp-length", type="intx", default=128,
             help="set the number of bits in the cyclic prefix [default=%default]")
@@ -193,7 +193,7 @@ def main():
                            help="set central frequency for VR 2 [default=%default]")
     vr2_options.add_option("", "--vr2-tx-amplitude", type="eng_float", default=0.125, metavar="AMPL",
                            help="set transmitter digital amplitude: 0 <= AMPL < 1.0 [default=%default]")
-    vr2_options.add_option("", "--vr2-file", type="string", default='/home/ctvr/.wishful/radio/vr2fifo',
+    vr2_options.add_option("", "--vr2-file", type="string", default='../../vr2fifo',
                       help="set the file to obtain data [default=%default]")
     vr2_options.add_option("", "--vr2-buffersize", type="intx", default=3072,
                            help="set number of bytes to read from buffer size for VR2 [default=%default]")
@@ -201,7 +201,7 @@ def main():
                            help="set modulation type (bpsk, qpsk, 8psk, qam{16,64}) [default=%default]")
     vr2_options.add_option("", "--vr2-fft-length", type="intx", default=64,
                            help="set the number of FFT bins [default=%default]")
-    vr2_options.add_option("", "--vr2-occupied-tones", type="intx", default=48,
+    vr2_options.add_option("", "--vr2-occupied-tones", type="intx", default=64,
                            help="set the number of occupied FFT bins [default=%default]")
     vr2_options.add_option("", "--vr2-cp-length", type="intx", default=2,
                            help="set the number of bits in the cyclic prefix [default=%default]")
