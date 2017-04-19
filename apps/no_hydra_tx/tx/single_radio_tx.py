@@ -40,8 +40,8 @@ from transmit_path import TransmitPath, ReadThread, XMLRPCThread
 from uhd_interface import uhd_transmitter
 
 #hydra_center_frequency = 5.5e9 # XCVR2450
-hydra_center_frequency = 2.45e9 # SBX
-vr1_initial_shift = -500e3
+hydra_center_frequency = 5.48e9 # SBX
+vr1_initial_shift = -750e3
 vr2_initial_shift =  400e3
 
 import numpy as np
@@ -127,11 +127,11 @@ def main():
             help="set number of bytes to read from buffer size for VR1 [default=%default]")
     vr1_options.add_option("-m", "--vr1-modulation", type="string", default="qpsk",
             help="set modulation type (bpsk, qpsk, 8psk, qam{16,64}) [default=%default]")
-    vr1_options.add_option("", "--vr1-fft-length", type="intx", default=512,
+    vr1_options.add_option("", "--vr1-fft-length", type="intx", default=1024,
             help="set the number of FFT bins [default=%default]")
-    vr1_options.add_option("", "--vr1-occupied-tones", type="intx", default=512,
+    vr1_options.add_option("", "--vr1-occupied-tones", type="intx", default=1024,
             help="set the number of occupied FFT bins [default=%default]")
-    vr1_options.add_option("", "--vr1-cp-length", type="intx", default=128,
+    vr1_options.add_option("", "--vr1-cp-length", type="intx", default=32,
             help="set the number of bits in the cyclic prefix [default=%default]")
 
     vr2_options = parser.add_option_group("VR 2 Options")
@@ -206,7 +206,6 @@ def main():
         t2 = XMLRPCThread(options.host_ip, options_vr2.buffersize, tb.txpath1, options_vr2.sleep_time)
         t2.start()
 
-    print 'Starting'
     return tb
 
 if __name__ == '__main__':

@@ -159,7 +159,7 @@ Hypervisor::set_radio_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
 
    if (sc < 0 || sc > fft_m_len) return -1;
 
-   //LOG(INFO) << "VR " << vr.get_id() << ": CF @" << vr_cf << ", BW @" << vr_bw << ", Offset @" << offset << ", First SC @ " << sc << ". Last SC @" << sc + fft_n;
+	std::cout << "VR " << vr.get_id() << ": CF @" << vr_cf << ", BW @" << vr_bw << ", Offset @" << offset << ", First SC @ " << sc << ". Last SC @" << sc + fft_n << std::endl;
 
    // Allocate subcarriers sequentially from sc
    iq_map_vec the_map;
