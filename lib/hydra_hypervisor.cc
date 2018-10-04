@@ -1,17 +1,17 @@
 /* -*- c++ -*- */
-/* 
+/*
  * Copyright 2016 Trinity Connect Centre.
- * 
+ *
  * HyDRA is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
- * 
+ *
  * HyDRA is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this software; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -159,6 +159,20 @@ Hypervisor::tx_run()
   {
     //std::this_thread::sleep_for(std::chrono::microseconds(g_tx_sleep_time));
     get_tx_window(optr , get_tx_fft());
+
+    if (*ready_for_delay)
+      {
+        static auto log_file = std::ofstream("delay_traces.txt");
+
+        auto ms = std::chrono::duration_cast<std::chrono::microseconds>(
+          std::chrono::high_resolution_clock::now() - (*p_received)
+        ).count();
+
+        *ready_for_delay = false;
+
+        log_file << ms << "\n";
+      }
+
     g_tx_dev->send(optr, get_tx_fft());
   }
 }

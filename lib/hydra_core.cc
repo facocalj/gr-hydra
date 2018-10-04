@@ -67,7 +67,7 @@ HydraCore::request_rx_resources(unsigned int u_id,
 
   if(vr != nullptr and vr->get_rx_enabled())
   {
-    // requesting tx resources for a VR already existing 
+    // requesting tx resources for a VR already existing
     if (p_resource_manager->check_rx_free(d_centre_freq, d_bandwidth, u_id))
     {
       p_resource_manager->free_rx_resources(u_id);
@@ -123,7 +123,7 @@ HydraCore::request_tx_resources(unsigned int u_id,
 
   if(vr != nullptr and vr->get_tx_enabled())
   {
-    // requesting tx resources for a VR already existing 
+    // requesting tx resources for a VR already existing
     if (p_resource_manager->check_tx_free(d_centre_freq, d_bandwidth, u_id))
     {
 
@@ -142,7 +142,6 @@ HydraCore::request_tx_resources(unsigned int u_id,
   {
     return 0;
   }
-
 
   static size_t u_udp_port = 7000;
   if (vr == nullptr)

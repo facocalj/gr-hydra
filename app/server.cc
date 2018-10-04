@@ -22,7 +22,7 @@ int main()
    /* TRANSMITTER */
    double d_tx_centre_freq = 1.1e9;
    double d_tx_samp_rate   = 2e6;
-   unsigned int u_tx_fft_size = 1024;
+   unsigned int u_tx_fft_size = 8*1024;
 
    /* RECEIVER */
    double d_rx_centre_freq = 1.1e9;

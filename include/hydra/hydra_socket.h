@@ -25,7 +25,9 @@ class udp_source
    */
   udp_source(const std::string& host,
              const std::string& port,
-             std::chrono::time_point<std::chrono::high_resolution_clock> *received);
+             std::chrono::time_point<std::chrono::high_resolution_clock> *received,
+             bool *ready_for_delay,
+             size_t size);
 
   /* DTOR
    */
@@ -42,9 +44,11 @@ class udp_source
   static std::unique_ptr<udp_source> make(
     const std::string& host,
     const std::string& port,
-    std::chrono::time_point<std::chrono::high_resolution_clock> *received)
+    std::chrono::time_point<std::chrono::high_resolution_clock> *received,
+    bool *ready_for_delay,
+    size_t size)
   {
-    return std::make_unique<udp_source>(host, port, received);
+    return std::make_unique<udp_source>(host, port, received, ready_for_delay, size);
   };
 
   // Registers the handle_receive method as a callback for incoming datagrams
@@ -88,6 +92,9 @@ class udp_source
   std::mutex out_mtx;
 
   std::chrono::time_point<std::chrono::high_resolution_clock>* p_received;
+  size_t total_received;
+  bool *measure;
+  size_t u_size;
 
   // Handle datagram and buffers, outputting to a queue
   void handle_receive(const boost::system::error_code& error, unsigned int u_bytes_trans);
