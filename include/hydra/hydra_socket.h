@@ -24,10 +24,7 @@ class udp_source
   /* CTOR
    */
   udp_source(const std::string& host,
-             const std::string& port,
-             std::chrono::time_point<std::chrono::high_resolution_clock> *received,
-             bool *ready_for_delay,
-             size_t size);
+             const std::string& port);
 
   /* DTOR
    */
@@ -43,12 +40,9 @@ class udp_source
 
   static std::unique_ptr<udp_source> make(
     const std::string& host,
-    const std::string& port,
-    std::chrono::time_point<std::chrono::high_resolution_clock> *received,
-    bool *ready_for_delay,
-    size_t size)
+    const std::string& port)
   {
-    return std::make_unique<udp_source>(host, port, received, ready_for_delay, size);
+    return std::make_unique<udp_source>(host, port);
   };
 
   // Registers the handle_receive method as a callback for incoming datagrams
@@ -90,11 +84,6 @@ class udp_source
   iq_sample* p_reinterpreted_cast;
   // Lock access to the deque
   std::mutex out_mtx;
-
-  std::chrono::time_point<std::chrono::high_resolution_clock>* p_received;
-  size_t total_received;
-  bool *measure;
-  size_t u_size;
 
   // Handle datagram and buffers, outputting to a queue
   void handle_receive(const boost::system::error_code& error, unsigned int u_bytes_trans);

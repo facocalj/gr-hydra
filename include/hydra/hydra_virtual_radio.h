@@ -84,10 +84,6 @@ public:
    */
   bool const ready_to_demap_iq_samples();
 
-  bool *ready_for_delay;
-  std::chrono::time_point<std::chrono::high_resolution_clock> *p_received;
-  std::chrono::time_point<std::chrono::high_resolution_clock> *p_delivered;
-
 
 private:
   iq_map_vec g_rx_map;

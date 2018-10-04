@@ -32,11 +32,13 @@ namespace hydra {
 
 Hypervisor::Hypervisor()
 {
+  measured = new bool(false);
+  p_received = new std::chrono::high_resolution_clock::time_point;
 }
 
 Hypervisor::Hypervisor(size_t _fft_m_len,
-      double central_frequency,
-      double bandwidth):
+                       double central_frequency,
+                       double bandwidth):
         tx_fft_len(_fft_m_len),
         g_tx_cf(central_frequency),
         g_tx_bw(bandwidth),
@@ -44,6 +46,7 @@ Hypervisor::Hypervisor(size_t _fft_m_len,
 {
    g_fft_complex  = sfft_complex(new fft_complex(rx_fft_len));
    g_ifft_complex = sfft_complex(new fft_complex(tx_fft_len, false));
+
 };
 
 size_t
@@ -160,15 +163,15 @@ Hypervisor::tx_run()
     //std::this_thread::sleep_for(std::chrono::microseconds(g_tx_sleep_time));
     get_tx_window(optr , get_tx_fft());
 
-    if (*ready_for_delay)
+    if (*measured)
       {
-        static auto log_file = std::ofstream("delay_traces.txt");
+        static auto log_file = std::ofstream("hypervisor_traces.txt");
 
         auto ms = std::chrono::duration_cast<std::chrono::microseconds>(
           std::chrono::high_resolution_clock::now() - (*p_received)
         ).count();
 
-        *ready_for_delay = false;
+        *measured = false;
 
         log_file << ms << "\n";
       }

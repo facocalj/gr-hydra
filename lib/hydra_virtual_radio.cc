@@ -36,9 +36,6 @@ VirtualRadio::VirtualRadio(size_t _idx, Hypervisor *hypervisor):
    g_rx_udp_port(0),
    g_tx_udp_port(0)
 {
-   ready_for_delay = new bool(false);
-   p_received = new std::chrono::high_resolution_clock::time_point;
-   p_delivered = new std::chrono::high_resolution_clock::time_point;
 }
 
 
@@ -112,11 +109,7 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
 
    // Create UDP receiver
    tx_socket = udp_source::make("0.0.0.0",
-                                std::to_string(u_tx_udp),
-                                p_received,
-                                ready_for_delay,
-                                g_tx_fft_size);
-
+                                std::to_string(u_tx_udp));
 
    // Create new timed buffer
    tx_buffer = std::make_shared<RxBuffer>(tx_socket->buffer(),
@@ -183,18 +176,8 @@ VirtualRadio::map_tx_samples(gr_complex *samples_buf)
   std::lock_guard<std::mutex> _l(g_mutex);
   const iq_window * buf = tx_buffer->consume();
 
-  if (*ready_for_delay)
-  {
-    static auto log_file = std::ofstream("delay_traces.txt");
-
-    auto ms = std::chrono::duration_cast<std::chrono::microseconds>(
-      std::chrono::high_resolution_clock::now() - (*p_received)
-    ).count();
-
-    *ready_for_delay = false;
-
-    log_file << ms << "\n";
-  }
+  *(p_hypervisor->p_received) = std::chrono::high_resolution_clock::now();
+  *(p_hypervisor->measured) = true;
 
   if (buf == nullptr)
   {
