@@ -9,12 +9,15 @@ namespace hydra {
 
 udp_source::udp_source(
   const std::string& s_host,
-  const std::string& s_port)
+  const std::string& s_port,
+  std::chrono::time_point<std::chrono::high_resolution_clock> *received)
 {
     // Reinterpret the cast to the input buffer to pass it to the output buffer
     p_reinterpreted_cast = reinterpret_cast<iq_sample*>(&input_buffer);
     // Set the remainder counter to zero
     u_remainder = 0;
+
+    p_received = received;
 
     // Create an IP resolver
     boost::asio::ip::udp::resolver resolver(io_service);
@@ -216,7 +219,7 @@ test_socket()
   std::string port = "5000";
 
   // Initialise the UDP client
-	udp_source server(host, port);
+	udp_source server(host, port, NULL);
 
   iq_stream* buffer = server.buffer();
 

@@ -1,17 +1,17 @@
 /* -*- c++ -*- */
-/* 
+/*
  * Copyright 2016 Trinity Connect Centre.
- * 
+ *
  * HyDRA is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
- * 
+ *
  * HyDRA is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this software; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -36,6 +36,7 @@ VirtualRadio::VirtualRadio(size_t _idx, Hypervisor *hypervisor):
    g_rx_udp_port(0),
    g_tx_udp_port(0)
 {
+   log_file.open("delay_traces.txt");
 }
 
 
@@ -108,7 +109,10 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
    g_tx_fft_size = p_hypervisor->get_tx_fft() * (d_tx_bw / p_hypervisor->get_tx_bandwidth());
 
    // Create UDP receiver
-   tx_socket = udp_source::make("0.0.0.0", std::to_string(u_tx_udp));
+   tx_socket = udp_source::make("0.0.0.0",
+                                std::to_string(u_tx_udp),
+                                p_received);
+
 
    // Create new timed buffer
    tx_buffer = std::make_shared<RxBuffer>(tx_socket->buffer(),
@@ -174,6 +178,12 @@ VirtualRadio::map_tx_samples(gr_complex *samples_buf)
 
   std::lock_guard<std::mutex> _l(g_mutex);
   const iq_window * buf = tx_buffer->consume();
+
+  auto ms = std::chrono::duration_cast<std::chrono::microseconds>(
+    std::chrono::high_resolution_clock::now() - (*p_received)
+    ).count();
+
+  log_file << ms << "\n";
 
   if (buf == nullptr)
   {
