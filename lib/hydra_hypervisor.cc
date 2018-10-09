@@ -159,20 +159,6 @@ Hypervisor::tx_run()
   {
     //std::this_thread::sleep_for(std::chrono::microseconds(g_tx_sleep_time));
     get_tx_window(optr , get_tx_fft());
-
-    if (*ready_for_delay)
-      {
-        static auto log_file = std::ofstream("delay_traces.txt");
-
-        auto ms = std::chrono::duration_cast<std::chrono::microseconds>(
-          std::chrono::high_resolution_clock::now() - (*p_received)
-        ).count();
-
-        *ready_for_delay = false;
-
-        log_file << ms << "\n";
-      }
-
     g_tx_dev->send(optr, get_tx_fft());
   }
 }

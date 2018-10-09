@@ -185,7 +185,9 @@ VirtualRadio::map_tx_samples(gr_complex *samples_buf)
 
   if (*ready_for_delay)
   {
-    static auto log_file = std::ofstream("delay_traces.txt");
+    static auto log_file = std::ofstream("delay_traces_" +
+                                         std::to_string(g_tx_fft_size)
+                                         + ".txt");
 
     auto ms = std::chrono::duration_cast<std::chrono::microseconds>(
       std::chrono::high_resolution_clock::now() - (*p_received)
