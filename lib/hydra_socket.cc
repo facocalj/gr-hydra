@@ -121,11 +121,11 @@ udp_source::handle_receive(
             total_received += u_bytes_trans - u_remainder;
          }
 
-         if (total_received - u_remainder >= u_size * IQ_SIZE)
+         if (total_received >= u_size * IQ_SIZE)
          {
            *p_received = std::chrono::high_resolution_clock::now();
            *measure = true;
-           total_received = 0;
+           total_received -= u_size * IQ_SIZE;
          }
 
         // If there is a new remainder
