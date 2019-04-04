@@ -10,5 +10,8 @@ target_link_libraries(server hydra)
 add_executable(client client.cc)
 target_link_libraries(client hydra)
 
-add_executable(iq_generator iq_generator.cc)
-target_link_libraries(iq_generator hydra)
+add_executable(tx_trace tx_trace.cc)
+target_link_libraries(tx_trace hydra)
+
+add_executable(tx_iqs tx_iqs.cc)
+target_link_libraries(tx_iqs hydra)
