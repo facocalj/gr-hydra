@@ -8,11 +8,16 @@ using namespace boost::program_options;
 // Instantiate the backend object
 hydra::uhd_hydra_sptr backend;
 
+// Instantiate the HyDRA object
+hydra::HydraMain *hydra_instance;
+
 void
 signal_handler(int signum)
 {
   std::cout << "Closing Application." << std::endl;
+
   backend->release();
+  hydra_instance->stop();
 }
 
 void on_age(int age)
@@ -112,22 +117,22 @@ main(int argc, const char *argv[])
 
 
    /* Instantiate XVL */
-   hydra::HydraMain main = hydra::HydraMain(s_host + ":" + std::to_string(u_port));
+   hydra_instance = new hydra::HydraMain(s_host + ":" + std::to_string(u_port));
 
-   main.set_tx_config(
+   hydra_instance->set_tx_config(
      backend,
      d_tx_centre_freq,
      d_tx_samp_rate,
      u_tx_fft_size);
 
-   main.set_rx_config(
+   hydra_instance->set_rx_config(
      backend,
      d_rx_centre_freq,
      d_rx_samp_rate,
      u_rx_fft_size);
 
    /* Run server */
-   main.run();
+   hydra_instance->run();
   }
   catch (const error &ex)
   {

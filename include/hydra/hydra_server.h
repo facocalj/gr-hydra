@@ -45,6 +45,14 @@ public:
    /* Run auto discovery service */
    int auto_discovery();
 
+   std::unique_ptr<bool> p_stop;
+
+   // Toggle server stop flag
+   void stop()
+   {
+     *p_stop = true;
+   };
+
 private:
    // Struct with the server info
    xvl_info server_info;

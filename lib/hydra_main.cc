@@ -49,4 +49,12 @@ void HydraMain::run()
 }
 
 
+void
+HydraMain::stop()
+{
+  server->stop();
+  std::cout << "cout" << std::endl;
+}
+
+
 } // namespace hydra

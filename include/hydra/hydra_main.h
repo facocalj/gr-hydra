@@ -15,6 +15,8 @@ class HydraMain
 public:
    /* CTOR
     */
+   HydraMain();
+
    HydraMain(std::string server_addr, unsigned int u_monitor_port = 4996);
 
    void set_rx_config(uhd_hydra_sptr usrp,
@@ -29,6 +31,8 @@ public:
 
    // Run method
    void run();
+
+   void stop();
 
 private:
    std::string s_server_addr;
