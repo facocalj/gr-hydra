@@ -127,7 +127,7 @@ recv_udp(char *msg,
    servAddr.sin_port = htons(port);
    rc = bind(sd, (struct sockaddr *) &servAddr, sizeof(servAddr));
 
-   std::cout << boost::format("waiting for data on port UDP %u") %  port << std::endl;
+   // std::cout << boost::format("waiting for data on port UDP %u") %  port << std::endl;
 
    //while(1) {
    /* init buffer */

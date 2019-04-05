@@ -59,7 +59,7 @@ HydraMain::stop()
   server->stop();
 
   // Print
-  std::cout << "Stopped all services" << std::endl;
+  // std::cout << "Stopped all services" << std::endl;
 }
 
 

@@ -27,17 +27,23 @@ HydraServer::auto_discovery()
    char msg[MAX_MSG];
 
    int rcv = 0;
+
+   int rx_port = 5001;
+   int tx_port = 5002;
+
+   std::cout << "Waiting for data on port UDP " <<  rx_port << std::endl;
+
    // Event loop stop condition
    while (not thr_stop)
    {
-      rcv = recv_udp(msg, MAX_MSG, true, 5001);
+      rcv = recv_udp(msg, MAX_MSG, true, rx_port);
 
       if (rcv != -1)
-        send_udp(msg, s_server_addr, false, 5002);
+        send_udp(msg, s_server_addr, false, tx_port);
    }
 
    // Output debug information
-   std::cout << "Stopped autodiscovery" << std::endl;
+   // std::cout << "Stopped autodiscovery" << std::endl;
 }
 
 // Run the server
@@ -50,7 +56,7 @@ HydraServer::run()
   socket.bind (("tcp://" + s_server_addr).c_str());
 
   // Timeout to get out of the while loop since recv is blocking
-  int timeout = 100;
+  int timeout = 1000;
   socket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
   // int linger = 0; // Proper shutdown ZeroMQ
   // socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
