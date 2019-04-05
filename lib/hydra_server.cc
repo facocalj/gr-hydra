@@ -26,12 +26,18 @@ HydraServer::auto_discovery()
    const int MAX_MSG = 1000;
    char msg[MAX_MSG];
 
+   int rcv = 0;
    // Event loop stop condition
    while (not thr_stop)
    {
-      recv_udp(msg, MAX_MSG, true, 5001);
-      send_udp(msg, s_server_addr, false, 5002);
+      rcv = recv_udp(msg, MAX_MSG, true, 5001);
+
+      if (rcv != -1)
+        send_udp(msg, s_server_addr, false, 5002);
    }
+
+   // Output debug information
+   std::cout << "Stopped autodiscovery" << std::endl;
 }
 
 // Run the server
@@ -44,8 +50,10 @@ HydraServer::run()
   socket.bind (("tcp://" + s_server_addr).c_str());
 
   // Timeout to get out of the while loop since recv is blocking
-  int timeout = 1000;
+  int timeout = 100;
   socket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+  // int linger = 0; // Proper shutdown ZeroMQ
+  // socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
 
   // Change the server status
   server_info.s_status = "Enabled";
@@ -62,14 +70,36 @@ HydraServer::run()
     server_addr_no_port = tokens[0];
   }
 
+  // Received message flag
+  int rc;
+
   // Event loop stop condition
   while (not thr_stop)
   {
     //  Wait for next request from client
-    int rc = socket.recv (&request);
+    try
+    {
+      // Try receive messages from clinets
+      rc = socket.recv(&request);
+    }
+    // Catch ZMQ errors
+    catch (zmq::error_t& e)
+    {
+      // If it is a "I am ZMQ and I am a prick" error
+      if (e.num() == EINTR)
+      {
+        // ZMQ throws this error when we want to exit
+        break;
+      }
+      else
+      {
+        // Output real error mesage
+        std::cout << "ZMQ Error. " << e.what() << std::endl;
+      }
+    }
 
     // If received a message within the timeout period
-    if (rc)
+    if (rc && not thr_stop)
     {
       // Unpack string from message_t and push it to a string stream
       std::stringstream ss; ss << std::string(static_cast<char*>(request.data()),
@@ -258,11 +288,11 @@ HydraServer::run()
   } // While loop
 
   // Close the ZMQ primitives
-  socket.close();
-  context.close();
+  // socket.close();
+  // context.close();
 
   // Join the autodiscovery thread
-  // autod.join();
+  autod.join();
 
   // Output message when server stops
   std::cout << "Stopped XVL Server" << std::endl;

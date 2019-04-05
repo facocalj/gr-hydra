@@ -155,6 +155,8 @@ device_uhd::receive(window &buf, size_t len)
 #else
       rx_stream->recv(&buf.front(), buf.size(), md, 0.001024);
 #endif
+
+#ifdef UHD_LOG
       switch(md.error_code)
       {
         case uhd::rx_metadata_t::ERROR_CODE_NONE:
@@ -171,6 +173,7 @@ device_uhd::receive(window &buf, size_t len)
           return 0;
           break;
       }
+#endif
 }
 
 device_image_gen::device_image_gen(std::string device_args)

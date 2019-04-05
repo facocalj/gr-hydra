@@ -54,6 +54,7 @@ HydraMain::stop()
 {
   // Stop the HyDRA Core
   core->stop();
+
   // Stop the HyDRA Server
   server->stop();
 

@@ -165,7 +165,7 @@ Hypervisor::tx_run()
   }
 
   // Print debug message
-  std::cout << "Stopped hypervisor's transmitter chain" << std::endl;
+  // std::cout << "Stopped hypervisor's transmitter chain" << std::endl;
 }
 
 void
@@ -278,7 +278,7 @@ Hypervisor::rx_run()
   }
 
   // Print debug message
-  std::cout << "Stopped hypervisor's receiver chain" << std::endl;
+  // std::cout << "Stopped hypervisor's receiver chain" << std::endl;
 }
 
 void
