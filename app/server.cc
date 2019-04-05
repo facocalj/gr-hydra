@@ -20,11 +20,6 @@ signal_handler(int signum)
   hydra_instance->stop();
 }
 
-void on_age(int age)
-{
-  std::cout << "On age: " << age << '\n';
-}
-
 int
 main(int argc, const char *argv[])
 {
@@ -115,7 +110,6 @@ main(int argc, const char *argv[])
    unsigned int u_port = vm["port"].as<unsigned int>();
    std::string s_host = vm["host"].as<std::string>();
 
-
    /* Instantiate XVL */
    hydra_instance = new hydra::HydraMain(s_host + ":" + std::to_string(u_port));
 
@@ -133,6 +127,7 @@ main(int argc, const char *argv[])
 
    /* Run server */
    hydra_instance->run();
+
   }
   catch (const error &ex)
   {

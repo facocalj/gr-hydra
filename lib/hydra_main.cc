@@ -52,8 +52,13 @@ void HydraMain::run()
 void
 HydraMain::stop()
 {
+  // Stop the HyDRA Core
+  core->stop();
+  // Stop the HyDRA Server
   server->stop();
-  std::cout << "cout" << std::endl;
+
+  // Print
+  std::cout << "Stopped all services" << std::endl;
 }
 
 

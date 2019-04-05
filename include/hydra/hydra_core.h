@@ -73,6 +73,13 @@ public:
    // Free resource
    int free_resources(size_t u_id);
 
+   // Stop the Core threads
+   void stop()
+   {
+     // Stop the hypervisor
+     p_hypervisor->stop();
+   }
+
 };
 
 }; // namespace hydar

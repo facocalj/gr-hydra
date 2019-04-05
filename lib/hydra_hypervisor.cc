@@ -1,17 +1,17 @@
 /* -*- c++ -*- */
-/* 
+/*
  * Copyright 2016 Trinity Connect Centre.
- * 
+ *
  * HyDRA is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
- * 
+ *
  * HyDRA is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this software; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -144,6 +144,8 @@ Hypervisor::set_tx_resources(uhd_hydra_sptr tx_dev, double cf, double bw, size_t
    g_tx_subcarriers_map = iq_map_vec(fft, -1);
    g_ifft_complex = sfft_complex(new fft_complex(fft, false));
 
+   // Thread stop flag
+   thr_tx_stop = false;
 
    g_tx_thread = std::make_unique<std::thread>(&Hypervisor::tx_run, this);
 }
@@ -154,12 +156,16 @@ Hypervisor::tx_run()
   size_t g_tx_sleep_time = llrint(get_tx_fft() * 1e6 / get_tx_bandwidth());
   window optr(get_tx_fft());
 
-  while (true)
+  // Even loop
+  while (not thr_tx_stop)
   {
     get_tx_window(optr , get_tx_fft());
     g_tx_dev->send(optr, get_tx_fft());
     std::fill(optr.begin(), optr.end(), std::complex<float>(0,0));
   }
+
+  // Print debug message
+  std::cout << "Stopped hypervisor's transmitter chain" << std::endl;
 }
 
 void
@@ -253,6 +259,9 @@ Hypervisor::set_rx_resources(uhd_hydra_sptr rx_dev, double cf, double bw, size_t
   g_rx_subcarriers_map = iq_map_vec(fft_len, -1);
   g_fft_complex = sfft_complex(new fft_complex(fft_len));
 
+  // Thread stop flag
+  thr_rx_stop = false;
+
   g_rx_thread = std::make_unique<std::thread>(&Hypervisor::rx_run, this);
 }
 
@@ -262,11 +271,14 @@ Hypervisor::rx_run()
   size_t g_rx_sleep_time = llrint(get_rx_fft() * 1e9 / get_rx_bandwidth());
   window optr(get_rx_fft());
 
-  while (true)
+  while (not thr_rx_stop)
   {
     if (g_rx_dev->receive(optr, get_rx_fft()))
       forward_rx_window(optr, get_rx_fft());
   }
+
+  // Print debug message
+  std::cout << "Stopped hypervisor's receiver chain" << std::endl;
 }
 
 void

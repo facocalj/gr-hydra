@@ -14,7 +14,7 @@ HydraServer::HydraServer(std::string server_addr,
   // Pointer to the XVL Core
   p_core = core;
 
-  p_stop = std::make_unique<bool>(false);
+  thr_stop = false;
 
   // Change the server status
   server_info.s_status = "Idle";
@@ -26,7 +26,8 @@ HydraServer::auto_discovery()
    const int MAX_MSG = 1000;
    char msg[MAX_MSG];
 
-   while (1)
+   // Event loop stop condition
+   while (not thr_stop)
    {
       recv_udp(msg, MAX_MSG, true, 5001);
       send_udp(msg, s_server_addr, false, 5002);
@@ -61,8 +62,8 @@ HydraServer::run()
     server_addr_no_port = tokens[0];
   }
 
-  // Even loop
-  while (not *p_stop)
+  // Event loop stop condition
+  while (not thr_stop)
   {
     //  Wait for next request from client
     int rc = socket.recv (&request);
@@ -260,7 +261,8 @@ HydraServer::run()
   socket.close();
   context.close();
 
-  autod.join();
+  // Join the autodiscovery thread
+  // autod.join();
 
   // Output message when server stops
   std::cout << "Stopped XVL Server" << std::endl;

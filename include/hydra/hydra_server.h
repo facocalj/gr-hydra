@@ -50,7 +50,7 @@ public:
    // Toggle server stop flag
    void stop()
    {
-     *p_stop = true;
+     thr_stop = true;
    };
 
 private:
@@ -61,6 +61,7 @@ private:
    // Pointer to ther XVL Core
    std::shared_ptr<HydraCore> p_core;
 
+   bool thr_stop;
 };
 
 
