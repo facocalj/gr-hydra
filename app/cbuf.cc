@@ -25,7 +25,19 @@ class xvl_buffer
     xvl_buffer();
 
     // Class Constructor
-    xvl_buffer(unsigned int size = 1);
+    xvl_buffer(unsigned int size = 0);
+
+    // Return the current size of the buffer
+    unsigned int size()
+    {
+      // Lock access to the inner buffer structure
+      std::lock_guard<std::mutex> lock(buffer_mutex);
+
+      return buffer.size();
+    };
+
+    // Return the capacity of the buffer
+    unsigned int capacity(){ return buffer.capacity();};
 
     // Read a number of elements
     template <unsigned int num_elements = 1>
@@ -70,8 +82,6 @@ xvl_buffer<data_type, container_type>::read()
   // Remove the given numbert of elements from the buffer
   buffer.erase(buffer.begin(), buffer.begin()+num_elements);
 
-  std::cout << buffer.size() << std::endl;
-
   // Return the array of elements
   return elements;
 };
@@ -86,8 +96,6 @@ xvl_buffer<data_type, container_type>::write(data_type element, unsigned int num
 
   // Insert N elements at the end
   buffer.insert(buffer.end(), num_elements, element);
-
-  std::cout << buffer.size() << std::endl;
 };
 // Write a number of elements to the buffer
 template <typename data_type, template<typename, typename> class container_type>
@@ -100,8 +108,6 @@ xvl_buffer<data_type, container_type>::write(iterator begin_it, unsigned int num
 
   // Assign N elements at the end, starting from the begin iterator
   buffer.insert(buffer.end(), begin_it, begin_it+num_elements);
-
-  std::cout << buffer.size() << std::endl;
 };
 
 // Write a range of elements to the buffer
@@ -115,8 +121,6 @@ xvl_buffer<data_type, container_type>::write(iterator begin_it, iterator end_it)
 
   // Assign a range of elements at the end, between the begin and end iterators
   buffer.insert(buffer.end(), begin_it, end_it);
-
-  std::cout << buffer.size() << std::endl;
 };
 
 // Access operator
@@ -139,15 +143,29 @@ int
 main(int argc, const char *argv[])
 {
   // Create a circular buffer with a capacity for 3 integers.
-  xvl_buffer<int, boost::circular_buffer> cb(9);
+  xvl_buffer<int> cb(10);
 
   // Insert some elements into the buffer.
-  cb.write(1);
-  cb.write(2);
-  cb.write(3);
-  cb.write(4);
-  cb.write(5);
-  cb.write(6);
+  // cb.write(1);
+  // cb.write(2);
+  // cb.write(3);
+  // cb.write(4);
+  // cb.write(5);
+  // cb.write(6);
+
+  std::array<int,6> t = {9,8,7,6,5,4};
+
+  std::cout << cb.capacity() << " " << cb.size() << std::endl;
+  cb.write(t.begin(), t.end());
+  std::cout << cb.capacity() << " " << cb.size() << std::endl;
+
+
+  for (int i = 0; i < cb.size(); i++)
+  {
+    std::cout << cb[i] << std::endl;
+  }
+
+
 
   int a = cb[0];  // a == 1
   int b = cb[1];  // b == 2
@@ -166,8 +184,6 @@ main(int argc, const char *argv[])
 
   // Elements can be popped from either the front or the back.
 
-
-  int d = cb[0];  // d == 4
 
   std::cout << a << std::endl;
   std::cout << b << std::endl;
