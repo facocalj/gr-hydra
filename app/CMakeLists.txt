@@ -12,3 +12,6 @@ target_link_libraries(client hydra)
 
 add_executable(iq_generator iq_generator.cc)
 target_link_libraries(iq_generator hydra)
+
+add_executable(cbuf cbuf.cc)
+target_link_libraries(cbuf ${Boost_LIBRARIES})
