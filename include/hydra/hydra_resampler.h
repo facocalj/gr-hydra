@@ -38,8 +38,8 @@ class resampler
         double sampling_rate,
         size_t fft_size);
 
-    // Consome a window
-    const window* consume();
+    // Consume a window
+    window* consume();
 
    // Stop the thread
    void stop()
