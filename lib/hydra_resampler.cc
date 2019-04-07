@@ -58,7 +58,7 @@ resampler::run()
     if (p_input_buffer->size() >= u_fft_size)
     {
       // Insert IQ samples from the input buffer into the window
-      temp_window = p_input_buffer->read<3>().front();
+      temp_window = p_input_buffer->read(u_fft_size);
     }
 
     //TODO Check the need for resampling here

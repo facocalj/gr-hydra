@@ -46,8 +46,7 @@ class hydra_buffer
     unsigned int capacity(){ return buffer.capacity();};
 
     // Read a number of elements
-    template <unsigned int num_elements = 1>
-    std::array<data_type, num_elements> read();
+    std::vector<data_type> read(unsigned int num_elements = 1);
 
     // Write a number of the same element in the buffer
     void write(data_type element, unsigned int num_elements = 1);

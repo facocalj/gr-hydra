@@ -14,15 +14,14 @@ hydra_buffer<data_type, container_type>::hydra_buffer(unsigned int size)
 
 // Read a number of elements
 template <typename data_type, template<typename, typename> class container_type>
-template <unsigned int num_elements>
-std::array<data_type, num_elements>
-hydra_buffer<data_type, container_type>::read()
+std::vector<data_type>
+hydra_buffer<data_type, container_type>::read(unsigned int num_elements)
 {
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);
 
-  // Create ana rray to hold the elements
-  std::array<data_type, num_elements> elements;
+  // Create an array to hold the elements
+  std::vector<data_type> elements(num_elements);
 
   // Copy the given number of elements to the temp array
   std::copy(buffer.begin(), buffer.begin()+num_elements, elements.begin());
