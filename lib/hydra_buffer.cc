@@ -1,141 +1,89 @@
 #include "hydra/hydra_buffer.h"
 
-
 #include <numeric>
 #include <boost/format.hpp>
 
 namespace hydra {
 
-RxBuffer::RxBuffer(
-   std::deque<std::complex<float>>* input_buffer,
-   std::mutex* in_mtx,
-   float sampling_rate,
-   unsigned int fft_size,
-   bool pad)
+template <typename data_type, template<typename, typename> class container_type>
+hydra_buffer<data_type, container_type>::hydra_buffer(unsigned int size)
 {
-  // Time threshold - round the division to a long int
-  l_threshold = llrint(fft_size * 1e6 / sampling_rate);
+  // Allocate a given size for the buffer
+  buffer = container_type<data_type, std::allocator<data_type>> (size);
+};
 
-  // Number of IQ samples per FFT window
-  u_fft_size = fft_size;
-  // The input buffer
-  p_input_buffer = input_buffer;
-  // Get the mutex
-  p_in_mtx = in_mtx;
-  // Get the padding flag
-  b_pad = pad;
-
-  // Create a thread to receive the data
-  buffer_thread = std::make_unique<std::thread>(&RxBuffer::run, this);
-}
-
-
-const window *
-RxBuffer::consume()
+// Read a number of elements
+template <typename data_type, template<typename, typename> class container_type>
+template <unsigned int num_elements>
+std::array<data_type, num_elements>
+hydra_buffer<data_type, container_type>::read()
 {
-   /* We do an ugly thing here: we have 'never_delete'
-    * storing the data want to be consumed by the hypervisor
-    */
-   std::lock_guard<std::mutex> _l(out_mtx);
-   if (output_buffer.size())
-   {
-      never_delete = output_buffer.front();
-      output_buffer.pop_front();
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
 
-      return &never_delete;
-   }
+  // Create ana rray to hold the elements
+  std::array<data_type, num_elements> elements;
 
-   return nullptr;
-}
+  // Copy the given number of elements to the temp array
+  std::copy(buffer.begin(), buffer.begin()+num_elements, elements.begin());
+  // Remove the given numbert of elements from the buffer
+  buffer.erase(buffer.begin(), buffer.begin()+num_elements);
 
+  // Return the array of elements
+  return elements;
+};
 
+// Write a number of the same element in the buffe:
+template <typename data_type, template<typename, typename> class container_type>
 void
-RxBuffer::run()
+hydra_buffer<data_type, container_type>::write(data_type element, unsigned int num_elements)
 {
-  // Thread stop condition
-  thr_stop = false;
-  // Vector of IQ samples that comprise a FFT window
-  std::vector<std::complex<float>> window;
-  // Reserve number of elements
-  window.reserve(u_fft_size);
-  // Empty IQ sample, as zeroes
-  std::complex<float> empty_iq = {0.0, 0.0};
-  // Integer to hold the current size of the queue
-  long long int ll_cur_size;
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
 
-  // Consume indefinitely
-  while(true)
-  {
-     // Wait for "threshold" nanoseconds
-     //std::this_thread::sleep_for(std::chrono::microseconds(l_threshold));
+  // Insert N elements at the end
+  buffer.insert(buffer.end(), num_elements, element);
+};
+// Write a number of elements to the buffer
+template <typename data_type, template<typename, typename> class container_type>
+template <typename iterator>
+void
+hydra_buffer<data_type, container_type>::write(iterator begin_it, unsigned int num_elements)
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
 
-     // If the destructor has been called
-     if (thr_stop){ return; }
-#if 0
-     // Windows not being consumed
-     if (output_buffer.size() > 100)
-     {
-       //std::lock_guard<std::mutex> _l(out_mtx);
-       //output_buffer.pop_front();
-       //std::cerr << "Too many windows!" << std::endl;
-     }
-#endif
+  // Assign N elements at the end, starting from the begin iterator
+  buffer.insert(buffer.end(), begin_it, begin_it+num_elements);
+};
 
-     {
-        std::lock_guard<std::mutex> _p(*p_in_mtx);
-        // Get the current size of the queue
-        ll_cur_size = p_input_buffer->size();
-        // Check whether the buffer has enough IQ samples
-        while (ll_cur_size > 0)
-        {
-          if (ll_cur_size >= u_fft_size){
-            // Insert IQ samples from the input buffer into the window
-            window.assign(p_input_buffer->begin(),
-                          p_input_buffer->begin() + u_fft_size); // 0..C
+// Write a range of elements to the buffer
+template <typename data_type, template<typename, typename> class container_type>
+template <typename iterator>
+void
+hydra_buffer<data_type, container_type>::write(iterator begin_it, iterator end_it)
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
 
-            // Erase the beginning of the queue
-            p_input_buffer->erase(p_input_buffer->begin(),
-                                  p_input_buffer->begin() + u_fft_size);
+  // Assign a range of elements at the end, between the begin and end iterators
+  buffer.insert(buffer.end(), begin_it, end_it);
+};
 
-          }
-          else
-          {
-            // Copy the current amount of samples from the buffer to the window
-            window.assign(p_input_buffer->begin(),
-                          p_input_buffer->begin() + ll_cur_size); // 0..C-1
-            // Erase the beginning of the queue
-            p_input_buffer->erase(p_input_buffer->begin(),
-                                  p_input_buffer->begin() + ll_cur_size);
+// Access operator
+template <typename data_type, template<typename, typename> class container_type>
+data_type
+hydra_buffer<data_type, container_type>::operator[](unsigned int position)
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
 
-            // Fill the remainder of the window with complex zeroes
-            window.insert(window.begin() + ll_cur_size,
-                          u_fft_size - ll_cur_size,
-                          empty_iq); // C..F-1
-          }
+  // Return element at a given position
+  return buffer[position];
+};
 
-          {
-            std::lock_guard<std::mutex> _l(out_mtx);
-            output_buffer.push_back(window);
-          }
 
-           ll_cur_size = p_input_buffer->size();
-        }
-#if 0
-        // Without padding, just transmit an empty window and wait for the next one
-        else
-        {
-           // Fill the window with complex zeroes
-           window.assign(u_fft_size, empty_iq);
 
-           // Add the window to the output buffer
-           std::lock_guard<std::mutex> _l(out_mtx);
-           output_buffer.push_back(window);
-           out_mtx.unlock();
-        }
-#endif
-     }
-  }
-}
 
 
 TxBuffer::TxBuffer(window_stream* input_buffer,

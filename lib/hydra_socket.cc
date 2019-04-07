@@ -8,6 +8,7 @@
 namespace hydra
 {
 
+// ZMQ Source
 zmq_source::zmq_source(const std::string& server_addr,
                        const std::string& remote_addr,
                        const std::string& port):
@@ -17,29 +18,38 @@ zmq_source::zmq_source(const std::string& server_addr,
   g_th_run(true)
 {
     // Create a thread to receive the data
-    g_rx_thread = std::make_unique<std::thread>(&zmq_source::connect, this);
+    g_rx_thread = std::make_unique<std::thread>(&zmq_source::run, this);
+
+    internal_buffer = hydra_buffer<iq_sample>(1000);
 }
 
-
+// Destructor
 zmq_source::~zmq_source()
 {
+  // Toggle thread stop condition
   g_th_run = false;
+  // Join event loop thread
   g_rx_thread->join();
 }
 
 
 void
-zmq_source::connect()
+zmq_source::run()
 {
+  // Construct the URI
   std::string addr = "tcp://" + s_host + ":" + s_port;
-  std::cout << "zmq_source addr: " << addr << std::endl;
+  std::cout << "<zmq_source> Remote client address: " << addr << std::endl;
 
+  // Connect to remote client
   socket.connect(addr.c_str());
 
+  // Event loop
   while (g_th_run)
   {
+    // Receive information from the client
     socket.recv(&message, ZMQ_NOBLOCK);
 
+    // TODO recv should be blocking, upon error-less reception, enter here
     if (message.size() > 0)
     {
       std::lock_guard<std::mutex> _l(out_mtx);
@@ -48,15 +58,19 @@ zmq_source::connect()
       if (message.size() % sizeof(iq_sample) != 0)
         std::cout << "Error: message not complete" << std::endl;
 
-      output_buffer.insert(output_buffer.end(),
-                           tmp,
-                           tmp + (message.size()/sizeof(iq_sample)));
+      // Write the amount of IQ samples to the buffer
+      internal_buffer.write(tmp, tmp + (message.size()/sizeof(iq_sample)));
     }
 
     message.rebuild();
   }
 
-  std::cout << "exiting zmq_source" << std::endl;
+  // Close the ZMQ primitives
+  socket.close();
+  context.close();
+
+  // Output debug information
+  std::cout << "Stopping <zmq_source>" << std::endl;
 }
 
 

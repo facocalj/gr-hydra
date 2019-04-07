@@ -1,17 +1,17 @@
 /* -*- c++ -*- */
-/* 
+/*
  * Copyright 2016 Trinity Connect Centre.
- * 
+ *
  * HyDRA is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
- * 
+ *
  * HyDRA is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this software; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -26,6 +26,7 @@
 #include <hydra/hydra_socket.h>
 #include <hydra/hydra_buffer.h>
 #include <hydra/hydra_stats.h>
+#include <hydra/hydra_resampler.h>
 
 #include <vector>
 #include <mutex>
@@ -91,7 +92,7 @@ private:
   size_t g_rx_udp_port;
   bool b_receiver;
   double g_rx_cf;      // Central frequency
-  double g_rx_bw;      // Bandwidth 
+  double g_rx_bw;      // Bandwidth
   samples_vec g_rx_samples;
   sfft_complex g_ifft_complex;
   zmq_sink_ptr rx_socket;
@@ -105,9 +106,9 @@ private:
   bool b_transmitter;
   ReportPtr tx_report;
   double g_tx_cf;      // Central frequency
-  double g_tx_bw;      // Bandwidth 
+  double g_tx_bw;      // Bandwidth
   sfft_complex g_fft_complex;
-  RxBufferPtr tx_buffer;
+  resampler<iq_sample> tx_resampler;
   zmq_source_ptr tx_socket;
 
   int g_idx;        // Radio unique ID

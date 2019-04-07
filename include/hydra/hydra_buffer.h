@@ -10,63 +10,60 @@
 #include <iostream>
 #include <math.h>
 
+#include <boost/circular_buffer.hpp>
 #include "hydra/types.h"
+
 
 namespace hydra {
 
-class RxBuffer
+// Template to allow different data types and container types
+template <typename data_type, template<typename, typename> class container_type = boost::circular_buffer>
+class hydra_buffer
 {
-private:
-   // Pointer to the buffer object
-   iq_stream * p_input_buffer;
-   // Hold the FFT size
-   unsigned int u_fft_size;
-   // Flag to indicate use of padding or empty frame
-   bool b_pad;
-   // Time threshold for padding/empty frames
-   long long int l_threshold;
+  private:
+    // The actual buffer, a container of the given type of data
+    container_type<data_type, std::allocator<data_type>> buffer;
+    // Output mutex
+    std::mutex buffer_mutex;
 
-   // Queue of arrays of IQ samples to be used for the FFT
-   window_stream output_buffer;
+  public:
+    // Default constructor
+    hydra_buffer();
 
-   // Pointer to the buffer thread
-   std::unique_ptr<std::thread> buffer_thread;
-   // Pointer to the input mutex
-   std::mutex* p_in_mtx;
-   // Output mutex
-   std::mutex out_mtx;
-   // Thread stop condition
-   bool thr_stop;
+    // Class Constructor
+    hydra_buffer(unsigned int size = 0);
 
-public:
-   // CTOR 
-   RxBuffer(iq_stream* input_buffer,
-            std::mutex* in_mtx,
-            float sampling_rate,
-            unsigned int fft_size,
-            bool pad);
+    // Return the current size of the buffer
+    unsigned int size()
+    {
+      // Lock access to the inner buffer structure
+      std::lock_guard<std::mutex> lock(buffer_mutex);
 
-   // DTOR
-   ~RxBuffer()
-   {
-      // Stop the thread
-      thr_stop = true;
-      // Stop the buffer thread
-      buffer_thread->join();
-   };
+      return buffer.size();
+    };
 
-   // Method to receive UDP data and put it into a buffer
-   void run();
+    // Return the capacity of the buffer
+    unsigned int capacity(){ return buffer.capacity();};
 
-   window never_delete;
-   const iq_window * consume();
+    // Read a number of elements
+    template <unsigned int num_elements = 1>
+    std::array<data_type, num_elements> read();
 
-   // Returns pointer to the output buffer of windows
-   window_stream* windows(){return &output_buffer;};
+    // Write a number of the same element in the buffer
+    void write(data_type element, unsigned int num_elements = 1);
 
-   // Returns pointer to the mutex
-   std::mutex* mutex() {return &out_mtx;};
+    // Write a number of elements to the buffer
+    template <typename iterator>
+    void write(iterator begin_it, unsigned int num_elements = 1);
+
+    // Write a range of elements to the buffer
+    template <typename iterator>
+    void write(iterator begin_it, iterator end_it);
+
+    // Access operator
+    data_type operator[](unsigned int position);
 };
+
 
 class TxBuffer
 {
@@ -118,7 +115,6 @@ private:
    bool thr_stop;
 };
 
-typedef std::shared_ptr<RxBuffer> RxBufferPtr;
 typedef std::shared_ptr<TxBuffer> TxBufferPtr;
 
 } // namespace hydra

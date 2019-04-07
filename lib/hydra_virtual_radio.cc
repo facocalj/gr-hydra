@@ -1,17 +1,17 @@
 /* -*- c++ -*- */
-/* 
+/*
  * Copyright 2016 Trinity Connect Centre.
- * 
+ *
  * HyDRA is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
- * 
+ *
  * HyDRA is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this software; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -20,6 +20,7 @@
 
 #include <hydra/hydra_virtual_radio.h>
 #include <hydra/hydra_hypervisor.h>
+#include <hydra/hydra_resampler.h>
 
 #include <hydra/hydra_uhd_interface.h>
 
@@ -106,16 +107,11 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
 
    g_tx_fft_size = p_hypervisor->get_tx_fft() * (d_tx_bw / p_hypervisor->get_tx_bandwidth());
 
-   // Create UDP receiver
-   //tx_socket = udp_source::make("0.0.0.0", std::to_string(u_tx_udp));
+   // Create ZMQ receiver
    tx_socket = zmq_source::make(server_addr, remote_addr, std::to_string(u_tx_udp));
 
-   // Create new timed buffer
-   tx_buffer = std::make_shared<RxBuffer>(tx_socket->buffer(),
-                                          tx_socket->mutex(),
-                                          d_tx_bw,
-                                          g_tx_fft_size,
-                                          b_pad);
+   // Create new resampler
+   tx_resampler = resampler<iq_sample>(tx_socket->buffer(), d_tx_bw, g_tx_fft_size);
 
    // create fft object
    g_fft_complex  = sfft_complex(new fft_complex(g_tx_fft_size));
@@ -174,7 +170,7 @@ VirtualRadio::map_tx_samples(gr_complex *samples_buf)
 
   std::lock_guard<std::mutex> _l(g_mutex);
 
-  const iq_window *buf = tx_buffer->consume();
+  const iq_window *buf = tx_resampler.consume();
   if (buf == nullptr){ return false; }
 
   const gr_complex *window = buf->data();

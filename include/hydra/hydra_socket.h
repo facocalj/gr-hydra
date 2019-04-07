@@ -12,6 +12,7 @@
 #include <zmq.hpp>
 
 #include "hydra/types.h"
+#include "hydra/hydra_buffer.h"
 
 // Using name space UDP
 using boost::asio::ip::udp;
@@ -39,31 +40,39 @@ class zmq_source
     return std::make_unique<zmq_source>(server_addr, remote_addr, port);
   }
 
-  // Returns pointer to the output buffer
-  iq_stream* buffer(){ return &output_buffer; };
+  // Returns an array with the number of requested elements
+  /* template <unsigned int num_of_samples>
+  std::array<iq_sample, num_of_samples> consume()
+  {
+    //Consume from the inernal buffer an returns the array
+    return internal_buffer.read<num_of_samples>();
+  };*/
 
-  // Returns pointer to the mutex
-  std::mutex* mutex() {return &out_mtx;};
+  // Return pointer to the internal buffer
+  hydra_buffer<iq_sample>* buffer()
+  {
+    return &internal_buffer;
+  };
 
  private:
+  // Hold host and port information
   std::string s_host;
   std::string s_port;
+  // Thread stop condition
   bool g_th_run;
 
-
-  // UDP thread to handle the receiving of datagrams
+  // Thread to handle the receiving of datagrams
   std::unique_ptr<std::thread> g_rx_thread;
+  // ZMQ-related primitives
   zmq::context_t context;
   zmq::message_t message;
   zmq::socket_t socket;
 
   // Create output buffer
-  iq_stream output_buffer;
+  hydra_buffer<iq_sample> internal_buffer;
 
-  // Lock access to the deque
-  std::mutex out_mtx;
-
-  void connect();
+  // Event loop
+  void run();
 };
 
 
