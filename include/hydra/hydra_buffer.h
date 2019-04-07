@@ -31,7 +31,7 @@ class hydra_buffer
     hydra_buffer();
 
     // Class Constructor
-    hydra_buffer(unsigned int size = 0);
+    hydra_buffer(unsigned int size);
 
     // Return the current size of the buffer
     unsigned int size()

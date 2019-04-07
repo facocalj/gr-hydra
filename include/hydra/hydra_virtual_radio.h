@@ -30,7 +30,7 @@
 
 #include <vector>
 #include <mutex>
-#include <boost/format.hpp>
+// #include <boost/format.hpp>
 
 namespace hydra {
 
@@ -108,7 +108,7 @@ private:
   double g_tx_cf;      // Central frequency
   double g_tx_bw;      // Bandwidth
   sfft_complex g_fft_complex;
-  resampler<iq_sample> tx_resampler;
+  std::unique_ptr<resampler> tx_resampler;
   zmq_source_ptr tx_socket;
 
   int g_idx;        // Radio unique ID

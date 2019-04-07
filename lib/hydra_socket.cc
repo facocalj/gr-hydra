@@ -20,7 +20,7 @@ zmq_source::zmq_source(const std::string& server_addr,
     // Create a thread to receive the data
     g_rx_thread = std::make_unique<std::thread>(&zmq_source::run, this);
 
-    internal_buffer = hydra_buffer<iq_sample>(1000);
+    // output_buffer = hydra_buffer<iq_sample>(1000);
 }
 
 // Destructor
@@ -52,14 +52,14 @@ zmq_source::run()
     // TODO recv should be blocking, upon error-less reception, enter here
     if (message.size() > 0)
     {
-      std::lock_guard<std::mutex> _l(out_mtx);
+      // Cast incoming data as IQ samples
       iq_sample *tmp = static_cast<iq_sample *>(message.data());
 
       if (message.size() % sizeof(iq_sample) != 0)
         std::cout << "Error: message not complete" << std::endl;
 
       // Write the amount of IQ samples to the buffer
-      internal_buffer.write(tmp, tmp + (message.size()/sizeof(iq_sample)));
+      output_buffer.write(tmp, tmp + (message.size()/sizeof(iq_sample)));
     }
 
     message.rebuild();

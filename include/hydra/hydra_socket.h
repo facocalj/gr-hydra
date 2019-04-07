@@ -44,14 +44,14 @@ class zmq_source
   /* template <unsigned int num_of_samples>
   std::array<iq_sample, num_of_samples> consume()
   {
-    //Consume from the inernal buffer an returns the array
-    return internal_buffer.read<num_of_samples>();
+    //Consume from the internal buffer an returns the array
+    return output_buffer.read<num_of_samples>();
   };*/
 
   // Return pointer to the internal buffer
   hydra_buffer<iq_sample>* buffer()
   {
-    return &internal_buffer;
+    return &output_buffer;
   };
 
  private:
@@ -69,7 +69,7 @@ class zmq_source
   zmq::socket_t socket;
 
   // Create output buffer
-  hydra_buffer<iq_sample> internal_buffer;
+  hydra_buffer<iq_sample> output_buffer;
 
   // Event loop
   void run();

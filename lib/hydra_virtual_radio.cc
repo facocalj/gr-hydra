@@ -24,8 +24,8 @@
 
 #include <hydra/hydra_uhd_interface.h>
 
-#include <iostream>
-#include <numeric>
+// #include <iostream>
+// #include <numeric>
 
 namespace hydra {
 
@@ -111,7 +111,10 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
    tx_socket = zmq_source::make(server_addr, remote_addr, std::to_string(u_tx_udp));
 
    // Create new resampler
-   tx_resampler = resampler<iq_sample>(tx_socket->buffer(), d_tx_bw, g_tx_fft_size);
+   tx_resampler = std::make_unique<resampler>(
+       tx_socket->buffer(),
+       d_tx_bw,
+       g_tx_fft_size);
 
    // create fft object
    g_fft_complex  = sfft_complex(new fft_complex(g_tx_fft_size));
@@ -168,9 +171,7 @@ VirtualRadio::map_tx_samples(gr_complex *samples_buf)
 {
   if (!b_transmitter) return false;
 
-  std::lock_guard<std::mutex> _l(g_mutex);
-
-  const iq_window *buf = tx_resampler.consume();
+  const iq_window *buf = tx_resampler->consume();
   if (buf == nullptr){ return false; }
 
   const gr_complex *window = buf->data();

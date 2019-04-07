@@ -41,8 +41,12 @@ hydra_buffer<data_type, container_type>::write(data_type element, unsigned int n
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);
 
-  // Insert N elements at the end
-  buffer.insert(buffer.end(), num_elements, element);
+  // If the writting process will not overflow/overwrite the buffer
+  if (buffer.size() + num_elements <= buffer.capacity())
+  {
+    // Insert N elements at the end
+    buffer.insert(buffer.end(), num_elements, element);
+  }
 };
 // Write a number of elements to the buffer
 template <typename data_type, template<typename, typename> class container_type>
@@ -53,8 +57,12 @@ hydra_buffer<data_type, container_type>::write(iterator begin_it, unsigned int n
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);
 
-  // Assign N elements at the end, starting from the begin iterator
-  buffer.insert(buffer.end(), begin_it, begin_it+num_elements);
+  // If the writting process will not overflow/overwrite the buffer
+  if (buffer.size() + num_elements <= buffer.capacity())
+  {
+    // Assign N elements at the end, starting from the begin iterator
+    buffer.insert(buffer.end(), begin_it, begin_it+num_elements);
+  }
 };
 
 // Write a range of elements to the buffer
@@ -66,8 +74,12 @@ hydra_buffer<data_type, container_type>::write(iterator begin_it, iterator end_i
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);
 
-  // Assign a range of elements at the end, between the begin and end iterators
-  buffer.insert(buffer.end(), begin_it, end_it);
+  // If the writting process will not overflow/overwrite the buffer
+  if (buffer.size() + std::distance(begin_it, end_it) <= buffer.capacity())
+  {
+    // Assign a range of elements at the end, between the begin and end iterators
+    buffer.insert(buffer.end(), begin_it, end_it);
+  }
 };
 
 // Access operator
