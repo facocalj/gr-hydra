@@ -75,7 +75,7 @@ zmq_source::run()
 };
 
 
-zmq_sink::zmq_sink(hydra_buffer<iq_sample>* input_buffer,
+zmq_sink::zmq_sink(std::shared_ptr<hydra_buffer<iq_sample>> input_buffer,
                    const std::string& server_addr,
                    const std::string& remote_addr,
                    const std::string& port):

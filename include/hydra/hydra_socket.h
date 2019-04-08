@@ -82,7 +82,7 @@ class zmq_sink
 {
   public:
     /* CTOR */
-    zmq_sink(hydra_buffer<iq_sample>* input_buffer,
+    zmq_sink(std::shared_ptr<hydra_buffer<iq_sample>> input_buffer,
              const std::string& server_addr,
              const std::string& remote_addr,
              const std::string& port);
@@ -90,7 +90,7 @@ class zmq_sink
     /* DTOR */
     ~zmq_sink();
 
-    static std::unique_ptr<zmq_sink> make(hydra_buffer<iq_sample>* input_buffer,
+    static std::unique_ptr<zmq_sink> make(std::shared_ptr<hydra_buffer<iq_sample>> input_buffer,
                                           const std::string& server_addr,
                                           const std::string& remote_addr,
                                           const std::string& port)
@@ -114,7 +114,7 @@ class zmq_sink
     zmq::socket_t socket;
 
     // Create input buffer
-    hydra_buffer<iq_sample>* p_input_buffer;
+    std::shared_ptr<hydra_buffer<iq_sample>> p_input_buffer;
 
     // Event loop
     void run();
