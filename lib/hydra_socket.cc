@@ -75,7 +75,6 @@ zmq_sink::zmq_sink(
   const std::string& server_addr,
   const std::string& remote_addr,
   const std::string& port): g_input_buffer(input_buffer),
-                            p_in_mtx(in_mtx),
                             s_host(server_addr),
                             s_port(port),
                             g_th_run(true),
@@ -93,7 +92,7 @@ zmq_sink::~zmq_sink()
 
 // Assign the handle receive callback when a datagram is received
 void
-zmq_sink::transmit()
+zmq_sink::run()
 {
   std::string addr = "tcp://" + s_host + ":" + s_port;
   std::cout << "zmq_sink addr: " << addr << std::endl;

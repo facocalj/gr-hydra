@@ -98,7 +98,7 @@ class VirtualRadio
     samples_vec g_rx_samples;
     sfft_complex g_ifft_complex;
     zmq_sink_ptr rx_socket;
-    TxBufferPtr rx_buffer;
+    std::unique_ptr<resampler<window, iq_sample>> rx_buffer;
     window_stream* rx_windows;
     ReportPtr rx_report;
 

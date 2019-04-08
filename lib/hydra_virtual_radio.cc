@@ -52,20 +52,20 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
   g_ifft_complex  = sfft_complex(new fft_complex(g_rx_fft_size, false));
 
   // TODO this must be shared with the hypervisor, or come from it
-  std::mutex * hyp_mutex = new std::mutex;
   rx_windows = new window_stream;
-  // Create new TX timed buffer
-  rx_buffer = std::make_shared<TxBuffer>(rx_windows,
-                                         hyp_mutex,
-                                         d_rx_bw,
-                                         g_rx_fft_size);
 
-  /* Create UDP transmitter */
-  rx_socket = zmq_sink::make(rx_buffer->stream(),
-                             rx_buffer->mutex(),
-                             server_addr,
-                             remote_addr,
-                             std::to_string(u_rx_udp));
+  // Create new resampler
+  rx_resampler = std::make_unique<resampler<window, iq_sample>>(
+      rx_windows,
+      d_rx_bw,
+      g_rx_fft_size);
+
+  /* Create ZMQ transmitter */
+  rx_socket = zmq_sink::make(
+      rx_buffer->buffer(),
+      server_addr,
+      emote_addr,
+      std::to_string(u_rx_udp));
 
   /* Always in the end. */
   p_hypervisor->notify(*this, Hypervisor::SET_RX_MAP);
