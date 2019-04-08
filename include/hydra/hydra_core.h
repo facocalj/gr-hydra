@@ -6,6 +6,8 @@
 #include "hydra/hydra_hypervisor.h"
 #include "hydra/hydra_uhd_interface.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include <set>
 #include <iostream>
 #include <list>

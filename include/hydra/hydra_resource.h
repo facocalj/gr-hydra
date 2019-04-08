@@ -9,6 +9,8 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
+#include <boost/format.hpp>
+
 namespace hydra {
 
 // Class that represents a spectrum chunk. Free chunks have an ID equal to zero

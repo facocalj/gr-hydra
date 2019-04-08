@@ -18,14 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <hydra/hydra_virtual_radio.h>
-#include <hydra/hydra_hypervisor.h>
-#include <hydra/hydra_resampler.h>
-
-#include <hydra/hydra_uhd_interface.h>
-
-// #include <iostream>
-// #include <numeric>
+#include "hydra/hydra_virtual_radio.h"
 
 namespace hydra {
 
@@ -111,7 +104,7 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
    tx_socket = zmq_source::make(server_addr, remote_addr, std::to_string(u_tx_udp));
 
    // Create new resampler
-   tx_resampler = std::make_unique<resampler>(
+   tx_resampler = std::make_unique<resampler<iq_sample, window>>(
        tx_socket->buffer(),
        d_tx_bw,
        g_tx_fft_size);

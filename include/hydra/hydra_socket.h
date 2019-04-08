@@ -7,8 +7,10 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <numeric>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 #include <zmq.hpp>
 
 #include "hydra/types.h"

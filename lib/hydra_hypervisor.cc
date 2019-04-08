@@ -19,12 +19,6 @@
  */
 
 #include "hydra/hydra_hypervisor.h"
-#include "hydra/hydra_uhd_interface.h"
-
-#include <algorithm>
-#include <functional>
-#include <iostream>
-#include <mutex>
 
 namespace hydra {
 

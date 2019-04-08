@@ -1,6 +1,5 @@
 #include "hydra/hydra_core.h"
 
-#include <boost/algorithm/string.hpp>
 
 
 namespace hydra {

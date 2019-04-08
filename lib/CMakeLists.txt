@@ -10,7 +10,6 @@ list(APPEND hydra_sources
     hydra_socket.cc
     hydra_stats.cc
     hydra_resource.cc
-    hydra_resampler.cc
     hydra_server.cc
     hydra_client.cc
     hydra_core.cc

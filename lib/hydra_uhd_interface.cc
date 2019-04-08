@@ -1,14 +1,5 @@
 #include "hydra/hydra_uhd_interface.h"
 
-#include "hydra/hydra_fft.h"
-
-#include <chrono>
-#include <fstream>
-#include <iostream>
-#include <numeric>
-#include <thread>
-#include <uhd/usrp/usrp.h>
-#include <opencv2/opencv.hpp>
 
 namespace hydra {
 

@@ -4,7 +4,14 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
+
+#include <zmq.hpp>
+
+#include "hydra/util/udp.h"
 
 namespace hydra
 {

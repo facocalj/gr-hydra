@@ -1,6 +1,5 @@
 #include "hydra/hydra_resource.h"
 
-#include <boost/format.hpp>
 
 namespace hydra {
 

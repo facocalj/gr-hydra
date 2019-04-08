@@ -1,8 +1,4 @@
 #include "hydra/hydra_client.h"
-#include "hydra/util/udp.h"
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
-#include <zmq.hpp>
 
 namespace hydra {
 

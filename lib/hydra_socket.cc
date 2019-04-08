@@ -1,10 +1,5 @@
 #include "hydra/hydra_socket.h"
 
-#include <numeric>
-#include <complex>
-#include <boost/format.hpp>
-#include <zmq.hpp>
-
 namespace hydra
 {
 

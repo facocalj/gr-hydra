@@ -1,12 +1,22 @@
 #ifndef INCLUDED_HYDRA_UHD_INTERFACE_H
 #define INCLUDED_HYDRA_UHD_INTERFACE_H
 
+#include "hydra/hydra_fft.h"
 #include "hydra/types.h"
 
 #include <uhd/usrp/multi_usrp.hpp>
 #include <zmq.hpp>
 #include <memory>
 #include <mutex>
+
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <numeric>
+#include <thread>
+#include <uhd/usrp/usrp.h>
+#include <opencv2/opencv.hpp>
+
 
 namespace hydra {
 

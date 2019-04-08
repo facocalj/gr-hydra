@@ -27,7 +27,7 @@ install(FILES
   hydra_socket.h
   hydra_stats.h
   hydra_resource.h
-  hydra_resampler.h
+  hydra_resampler.hpp
   hydra_core.h
   hydra_server.h
   hydra_client.h

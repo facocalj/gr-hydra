@@ -2,12 +2,14 @@
 #define HYDRA_SERVER_INCLUDE_H
 
 #include "hydra/hydra_core.h"
+#include "hydra/util/udp.h"
 
 #include <string>
 #include <iostream>
 #include <unistd.h>
 #include <boost/property_tree/json_parser.hpp>
 
+#include <boost/algorithm/string.hpp>
 
 namespace hydra {
 

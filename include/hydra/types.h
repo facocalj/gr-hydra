@@ -57,6 +57,10 @@ namespace hydra {
 
   typedef std::shared_ptr<Hypervisor> HypervisorPtr;
   typedef std::shared_ptr<VirtualRadio> VirtualRadioPtr;
+
+  typedef std::shared_ptr<VirtualRadio> vradio_ptr;
+  typedef std::vector<vradio_ptr> vradio_vec;
+
 } /* namespace hydra */
 
 #endif /* ifndef INCLUDED_HYDRA_TYPES_H */

@@ -10,6 +10,9 @@
 #include <iostream>
 #include <math.h>
 
+#include <numeric>
+#include <boost/format.hpp>
+
 #include <boost/circular_buffer.hpp>
 #include "hydra/types.h"
 

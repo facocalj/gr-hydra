@@ -1,7 +1,5 @@
 #include "hydra/hydra_buffer.h"
 
-#include <numeric>
-#include <boost/format.hpp>
 
 namespace hydra {
 

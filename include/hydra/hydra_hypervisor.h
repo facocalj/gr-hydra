@@ -23,12 +23,14 @@
 #include <hydra/types.h>
 #include <hydra/hydra_fft.h>
 #include <hydra/hydra_virtual_radio.h>
+#include "hydra/hydra_uhd_interface.h"
 
-
+#include <algorithm>
+#include <functional>
+#include <iostream>
 #include <mutex>
 #include <vector>
 #include <thread>
-
 
 namespace hydra {
 
