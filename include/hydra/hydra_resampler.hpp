@@ -14,7 +14,7 @@ class resampler
 {
   private:
     // Pointer to the buffer object
-    hydra_buffer<input_data_type>* p_input_buffer;
+    std::shared_ptr<hydra_buffer<input_data_type>> p_input_buffer;
     // Inernal buffer object
     hydra_buffer<output_data_type> output_buffer;
 
@@ -35,7 +35,7 @@ class resampler
 
     // Consturctor
     resampler(
-        hydra_buffer<input_data_type>* input_buffer,
+        std::shared_ptr<hydra_buffer<input_data_type>> input_buffer,
         double sampling_rate,
         size_t fft_size);
 
@@ -67,7 +67,7 @@ resampler<input_data_type, output_data_type>::resampler()
 
 template <typename input_data_type, typename output_data_type>
 resampler<input_data_type, output_data_type>::resampler(
-    hydra_buffer<input_data_type>* input_buffer,
+    std::shared_ptr<hydra_buffer<input_data_type>> input_buffer,
     double sampling_rate,
     size_t fft_size)
 {
@@ -83,14 +83,12 @@ resampler<input_data_type, output_data_type>::resampler(
   run_thread = std::make_unique<std::thread>(&resampler::run, this);
 };
 
-template <typename input_data_type, typename output_data_type>
+template <>
 void
-resampler<input_data_type, output_data_type>::run()
+inline resampler<iq_sample, iq_window>::run()
 {
   // Vector of IQ samples that comprise a FFT window
-  // output_data_type temp_object(u_fft_size);
-  // Integer to hold the current size of the queue
-  long long int ll_cur_size;
+  iq_window temp_object(u_fft_size);
 
   // If the destructor has been called
   while (not stop_thread)
@@ -99,14 +97,42 @@ resampler<input_data_type, output_data_type>::run()
     if (p_input_buffer->size() >= u_fft_size)
     {
       // Insert IQ samples from the input buffer into the window
-      // temp_object = p_input_buffer->read(u_fft_size);
+      temp_object = p_input_buffer->read(u_fft_size);
     }
 
     //TODO Check the need for resampling here
 
-    // output_buffer.write(temp_object);
+    output_buffer.write(temp_object);
   }
 };
+
+template <>
+void
+inline resampler<iq_window, iq_sample>::run()
+{
+  // Vector of IQ samples that comprise a FFT window
+  iq_window temp_object(u_fft_size);
+
+  // Only a single window per time, for resampling
+
+  // If the destructor has been called
+  while (not stop_thread)
+  {
+    // Check whether the buffer has windows
+    if (p_input_buffer->size())
+    {
+      // Insert IQ samples from the input buffer into the window
+      temp_object = p_input_buffer->read(1)[0];
+    }
+
+    //TODO Check the need for resampling here
+
+    // Write all the IQ sample in this window
+    output_buffer.write(temp_object.begin(), temp_object.end());
+  }
+};
+
+
 
 } // Namespace
 

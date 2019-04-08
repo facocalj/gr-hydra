@@ -28,16 +28,19 @@ class zmq_source
     /* CTOR */
     zmq_source(const std::string &server_addr,
                const std::string &remote_addr,
-               const std::string& port);
+               const std::string& port,
+               const unsigned int& buf_size);
 
     /* DTOR  */
     ~zmq_source();
 
     static std::unique_ptr<zmq_source> make(const std::string &server_addr,
                                             const std::string &remote_addr,
-                                            const std::string& port)
+                                            const std::string& port,
+                                            const unsigned int& buf_size)
     {
-      return std::make_unique<zmq_source>(server_addr, remote_addr, port);
+      return std::make_unique<zmq_source>(
+          server_addr, remote_addr, port, buf_size);
     }
 
     // Returns an array with the number of requested elements
@@ -49,9 +52,9 @@ class zmq_source
     };*/
 
     // Return pointer to the internal buffer
-    hydra_buffer<iq_sample>* buffer()
+    std::shared_ptr<hydra_buffer<iq_sample>> buffer()
     {
-      return &output_buffer;
+      return p_output_buffer;
     };
 
   private:
@@ -69,7 +72,7 @@ class zmq_source
     zmq::socket_t socket;
 
     // Create output buffer
-    hydra_buffer<iq_sample> output_buffer;
+    std::shared_ptr<hydra_buffer<iq_sample>> p_output_buffer;
 
     // Event loop
     void run();

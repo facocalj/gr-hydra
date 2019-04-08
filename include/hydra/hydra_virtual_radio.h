@@ -99,7 +99,7 @@ class VirtualRadio
     sfft_complex g_ifft_complex;
     zmq_sink_ptr rx_socket;
     std::unique_ptr<resampler<iq_window, iq_sample>> rx_resampler;
-    hydra_buffer<iq_window>* rx_windows;
+    std::shared_ptr<hydra_buffer<iq_window>> rx_windows;
     ReportPtr rx_report;
 
     iq_map_vec g_tx_map;

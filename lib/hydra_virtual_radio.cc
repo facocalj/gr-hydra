@@ -52,7 +52,7 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
   g_ifft_complex  = sfft_complex(new fft_complex(g_rx_fft_size, false));
 
   // TODO this must be shared with the hypervisor, or come from it
-  rx_windows = new hydra_buffer<iq_window>;
+  rx_windows = std::make_shared<hydra_buffer<iq_window>>(1000);
 
   // Create new resampler
   rx_resampler = std::make_unique<resampler<iq_window, iq_sample>>(
@@ -101,7 +101,11 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
    g_tx_fft_size = p_hypervisor->get_tx_fft() * (d_tx_bw / p_hypervisor->get_tx_bandwidth());
 
    // Create ZMQ receiver
-   tx_socket = zmq_source::make(server_addr, remote_addr, std::to_string(u_tx_udp));
+   tx_socket = zmq_source::make(
+       server_addr,
+       remote_addr,
+       std::to_string(u_tx_udp),
+       1000*g_tx_fft_size);
 
    // Create new resampler
    tx_resampler = std::make_unique<resampler<iq_sample, iq_window>>(

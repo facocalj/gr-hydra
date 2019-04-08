@@ -6,16 +6,17 @@ namespace hydra
 // ZMQ Source
 zmq_source::zmq_source(const std::string& server_addr,
                        const std::string& remote_addr,
-                       const std::string& port):
+                       const std::string& port,
+                       const unsigned int& buf_size):
   s_host(remote_addr),
   s_port(port),
   g_th_run(true),
   socket(context, ZMQ_PULL)
 {
+  // Create the outbut buffer with the proper buffer size
+  p_output_buffer = std::make_shared<hydra_buffer<iq_sample>>(buf_size);
   // Create a thread to receive the data
   g_rx_thread = std::make_unique<std::thread>(&zmq_source::run, this);
-
-  // output_buffer = hydra_buffer<iq_sample>(1000);
 };
 
 // Destructor
@@ -53,13 +54,16 @@ zmq_source::run()
         std::cout << "Error: message not complete" << std::endl;
 
       // Write the amount of IQ samples to the buffer
-      output_buffer.write(tmp, tmp + (message.size()/sizeof(iq_sample)));
+      p_output_buffer->write(tmp, tmp + (message.size()/sizeof(iq_sample)));
     }
-
+    // If not, lets wait a bit
+    else
+    {
+      // Sleep for a microssecond and prevent this thread to explode
+      std::this_thread::sleep_for(std::chrono::microseconds(1));
+    }
+    // Clear message data
     message.rebuild();
-
-    // Sleep for a microssecond and prevent this thread to explode
-    std::this_thread::sleep_for(std::chrono::microseconds(1));
   }
 
   // Close the ZMQ primitives
