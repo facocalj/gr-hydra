@@ -6,7 +6,6 @@ list(APPEND hydra_sources
     hydra_fft.cc
     hydra_virtual_radio.cc
     hydra_hypervisor.cc
-    hydra_buffer.cc
     hydra_socket.cc
     hydra_stats.cc
     hydra_resource.cc

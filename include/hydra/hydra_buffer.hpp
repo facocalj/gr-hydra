@@ -3,15 +3,8 @@
 
 #include <queue>
 #include <vector>
-#include <complex>
 #include <thread>
 #include <mutex>
-#include <chrono>
-#include <iostream>
-#include <math.h>
-
-#include <numeric>
-#include <boost/format.hpp>
 
 #include <boost/circular_buffer.hpp>
 #include "hydra/types.h"
@@ -85,16 +78,27 @@ hydra_buffer<data_type, container_type>::read(unsigned int num_elements)
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);
 
-  // Create an array to hold the elements
-  std::vector<data_type> elements(num_elements);
+  // If we have enough elemens to be consumed
+  if (buffer.size() >= num_elements)
+  {
+    // Create an array to hold the elements
+    std::vector<data_type> elements(num_elements);
 
-  // Copy the given number of elements to the temp array
-  std::copy(buffer.begin(), buffer.begin()+num_elements, elements.begin());
-  // Remove the given numbert of elements from the buffer
-  buffer.erase(buffer.begin(), buffer.begin()+num_elements);
+    // Copy the given number of elements to the temp array
+    std::copy(buffer.begin(), buffer.begin()+num_elements, elements.begin());
+    // Remove the given numbert of elements from the buffer
+    buffer.erase(buffer.begin(), buffer.begin()+num_elements);
 
-  // Return the array of elements
-  return elements;
+    // Return the array of elements
+    return elements;
+  }
+  // Ops, not there yet
+  else
+  {
+    // Return a default constructed instance, i.e., empty vector
+    return {};
+  }
+
 }
 
 // Write a number of the same element in the buffe:
@@ -160,62 +164,5 @@ hydra_buffer<data_type, container_type>::operator[](unsigned int position)
 }
 
 
-
-
-
-
-class TxBuffer
-{
-public:
-   // Constructor
-   TxBuffer(window_stream* input_buffer,
-            std::mutex* in_mtx,
-            double sampling_rate,
-            unsigned int fft_size);
-
-   // Destructor
-   ~TxBuffer()
-   {
-     /* Stop the thread */
-     thr_stop = true;
-     /* Stop the buffer thread */
-     buffer_thread->join();
-   };
-
-   void produce(const gr_complex *buf, size_t len);
-
-   // Method to transmit UDP data from a buffer
-   void run();
-
-   // Returns pointer to the output buffer, a stream of IQ samples
-   iq_stream *stream(){return &output_buffer;};
-
-   // Returns pointer to the mutex
-   std::mutex* mutex() {return &out_mtx;};
-
-private:
-   // Pointer to the input FFT
-   window_stream* p_input_buffer;
-   // Hold the FFT size
-   unsigned int u_fft_size;
-   // Time threshold for padding/empty frames
-   std::size_t threshold;
-   // Output deque
-
-   iq_stream output_buffer;
-
-   // Pointer to the buffer thread
-   std::unique_ptr<std::thread> buffer_thread;
-   // Pointer to the mutex
-   std::mutex* p_in_mtx;
-   // Output mutex
-   std::mutex out_mtx;
-   // Thread stop condition
-   bool thr_stop;
-};
-
-typedef std::shared_ptr<TxBuffer> TxBufferPtr;
-
-} // namespace hydra
-
+} // Namespace
 #endif

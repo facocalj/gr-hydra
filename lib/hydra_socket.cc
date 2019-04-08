@@ -9,14 +9,14 @@ zmq_source::zmq_source(const std::string& server_addr,
                        const std::string& port):
   s_host(remote_addr),
   s_port(port),
-  socket(context, ZMQ_PULL),
-  g_th_run(true)
+  g_th_run(true),
+  socket(context, ZMQ_PULL)
 {
-    // Create a thread to receive the data
-    g_rx_thread = std::make_unique<std::thread>(&zmq_source::run, this);
+  // Create a thread to receive the data
+  g_rx_thread = std::make_unique<std::thread>(&zmq_source::run, this);
 
-    // output_buffer = hydra_buffer<iq_sample>(1000);
-}
+  // output_buffer = hydra_buffer<iq_sample>(1000);
+};
 
 // Destructor
 zmq_source::~zmq_source()
@@ -25,8 +25,7 @@ zmq_source::~zmq_source()
   g_th_run = false;
   // Join event loop thread
   g_rx_thread->join();
-}
-
+};
 
 void
 zmq_source::run()
@@ -58,6 +57,9 @@ zmq_source::run()
     }
 
     message.rebuild();
+
+    // Sleep for a microssecond and prevent this thread to explode
+    std::this_thread::sleep_for(std::chrono::microseconds(1));
   }
 
   // Close the ZMQ primitives
@@ -66,73 +68,93 @@ zmq_source::run()
 
   // Output debug information
   std::cout << "Stopping <zmq_source>" << std::endl;
-}
+};
 
 
-zmq_sink::zmq_sink(
-  iq_stream *input_buffer,
-  std::mutex* in_mtx,
-  const std::string& server_addr,
-  const std::string& remote_addr,
-  const std::string& port): g_input_buffer(input_buffer),
-                            s_host(server_addr),
-                            s_port(port),
-                            g_th_run(true),
-                            socket(context, ZMQ_PUSH)
+zmq_sink::zmq_sink(hydra_buffer<iq_sample>* input_buffer,
+                   const std::string& server_addr,
+                   const std::string& remote_addr,
+                   const std::string& port):
+  p_input_buffer(input_buffer),
+  s_host(server_addr),
+  s_port(port),
+  g_th_run(true),
+  socket(context, ZMQ_PUSH)
 {
-  g_tx_thread = std::make_unique<std::thread>(&zmq_sink::transmit, this);
-}
+  // Create a thread to receive the data
+  g_rx_thread = std::make_unique<std::thread>(&zmq_sink::run, this);
+};
 
+// Destructor
 zmq_sink::~zmq_sink()
 {
+  // Toggle thread stop condition
   g_th_run = false;
-  g_tx_thread->join();
-}
-
+  // Join event loop thread
+  g_rx_thread->join();
+};
 
 // Assign the handle receive callback when a datagram is received
 void
 zmq_sink::run()
 {
+  // Construct the URI
   std::string addr = "tcp://" + s_host + ":" + s_port;
-  std::cout << "zmq_sink addr: " << addr << std::endl;
+  std::cout << "<zmq_sink> Local server address: " << addr << std::endl;
+
+  // Bind address
   socket.bind(addr.c_str());
+  // Set timeout for send operation
   socket.setsockopt(ZMQ_SNDTIMEO, 2000);
 
+  // Temp container for incoming IQ samples
+  std::vector<iq_sample> tmp;
+
+  // Event loop
   while (g_th_run)
   {
     // If there is anything to transmit
-    if (g_input_buffer->size() > 0)
+    if (p_input_buffer->size())
     {
-      /* Local scope lock */
+      // If we should stop running
+      if (not g_th_run){break;}
+
+        // Get all the stored samples
+        tmp = p_input_buffer->read(p_input_buffer->size());
+        // Allocate enough memory for this message
+        message.rebuild(tmp.size() * sizeof(iq_sample));
+
+        // Copy the samples onto the message object
+        std::copy(
+            tmp.begin(),
+            tmp.end(),
+            static_cast<iq_sample *>(message.data()));
+
+      // If we are still running
+      if (g_th_run)
       {
-        // Copy everything to output_buffer. Clear input
-        //
-        std::lock_guard<std::mutex> _inmtx(*p_in_mtx);
-
-        if (!g_th_run) return;
-
-        message.rebuild(g_input_buffer->size() * sizeof(gr_complex));
-        iq_sample *tmp = static_cast<iq_sample *>(message.data());
-        for (size_t i = 0; i < g_input_buffer->size() && g_th_run; ++i)
-          tmp[i] = (*g_input_buffer)[i];
-
-        g_input_buffer->erase(g_input_buffer->begin(), g_input_buffer->begin() + g_input_buffer->size());
+        // Send message to client
+        socket.send(message);
       }
-
-     if (g_th_run) socket.send(message);
     }
+    // There's nothing to trasmit
     else
     {
+      // Sleep for a microssecond and prevent this thread to explode
       std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
   } // while
 
-  std::cout << "Leaving zmq_sink::transmit thread" << std::endl;
+  // Close the ZMQ primitives
+  socket.close();
+  context.close();
+
+  // Output debug information
+  std::cout << "Stopping <zmq_sink>" << std::endl;
 }
 
 tcp_sink::tcp_sink(
-  iq_stream *input_buffer,
+  sample_stream *input_buffer,
   std::mutex* in_mtx,
   const std::string& s_host,
   const std::string& s_port):
@@ -303,7 +325,7 @@ udp_source::handle_receive(
 
 
 udp_sink::udp_sink(
-  iq_stream *input_buffer,
+  sample_stream *input_buffer,
   std::mutex* in_mtx,
   const std::string& s_host,
   const std::string& s_port):
@@ -327,7 +349,7 @@ udp_sink::udp_sink(
 void
 udp_sink::transmit()
 {
-  gr_complex output_buffer[BUFFER_SIZE];
+  iq_sample output_buffer[BUFFER_SIZE];
 
   while (g_th_run)
   {
@@ -390,7 +412,7 @@ test_socket()
   // Initialise the UDP client
 	udp_source server(host, port);
 
-  iq_stream* buffer = server.buffer();
+  sample_stream* buffer = server.buffer();
 
   int i = 0;
   while (true)

@@ -94,7 +94,7 @@ class Hypervisor
   void set_tx_mapping();
   int set_tx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map);
   void tx_run();
-  size_t get_tx_window(window &optr, size_t len); // where the tx things happen
+  size_t get_tx_window(iq_window &optr, size_t len); // where the tx things happen
 
 
   // RX related methods
@@ -107,7 +107,7 @@ class Hypervisor
   void set_rx_mapping();
   int set_rx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map);
   void rx_run();
-  void forward_rx_window(window &optr, size_t len); // where the rx things happen
+  void forward_rx_window(iq_window &optr, size_t len); // where the rx things happen
 
 
 private:

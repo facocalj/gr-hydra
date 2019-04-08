@@ -23,7 +23,7 @@ install(FILES
   hydra_fft.h
   hydra_virtual_radio.h
   hydra_hypervisor.h
-  hydra_buffer.h
+  hydra_buffer.hpp
   hydra_socket.h
   hydra_stats.h
   hydra_resource.h

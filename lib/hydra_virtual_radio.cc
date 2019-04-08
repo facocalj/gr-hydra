@@ -52,19 +52,19 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
   g_ifft_complex  = sfft_complex(new fft_complex(g_rx_fft_size, false));
 
   // TODO this must be shared with the hypervisor, or come from it
-  rx_windows = new window_stream;
+  rx_windows = new hydra_buffer<iq_window>;
 
   // Create new resampler
-  rx_resampler = std::make_unique<resampler<window, iq_sample>>(
+  rx_resampler = std::make_unique<resampler<iq_window, iq_sample>>(
       rx_windows,
       d_rx_bw,
       g_rx_fft_size);
 
   /* Create ZMQ transmitter */
   rx_socket = zmq_sink::make(
-      rx_buffer->buffer(),
+      rx_resampler->buffer(),
       server_addr,
-      emote_addr,
+      remote_addr,
       std::to_string(u_rx_udp));
 
   /* Always in the end. */
@@ -104,7 +104,7 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
    tx_socket = zmq_source::make(server_addr, remote_addr, std::to_string(u_tx_udp));
 
    // Create new resampler
-   tx_resampler = std::make_unique<resampler<iq_sample, window>>(
+   tx_resampler = std::make_unique<resampler<iq_sample, iq_window>>(
        tx_socket->buffer(),
        d_tx_bw,
        g_tx_fft_size);
@@ -160,29 +160,25 @@ VirtualRadio::set_tx_mapping(const iq_map_vec &iq_map)
 }
 
 bool
-VirtualRadio::map_tx_samples(gr_complex *samples_buf)
+VirtualRadio::map_tx_samples(iq_sample *samples_buf)
 {
-  if (!b_transmitter) return false;
+  // If the transmitter chain was not defined
+  if (not b_transmitter){return false;}
 
-  const iq_window *buf = tx_resampler->consume();
-  if (buf == nullptr){ return false; }
+  // Try to get a window from the resampler
+  const iq_window buf = tx_resampler->buffer()->read(1)[0];
 
-  const gr_complex *window = buf->data();
+  // Return false if the window is empty
+  if (buf.empty()){return false;}
 
   // Copy samples in TIME domain to FFT buffer, execute FFT
-  g_fft_complex->set_data(window, g_tx_fft_size);
+  g_fft_complex->set_data(&buf.front(), g_tx_fft_size);
   g_fft_complex->execute();
-  gr_complex *outbuf = g_fft_complex->get_outbuf();
+  iq_sample *outbuf = g_fft_complex->get_outbuf();
 
   // map samples in FREQ domain to samples_buff
   // perfors fft shift
-  size_t idx = 0;
-  for (iq_map_vec::iterator it = g_tx_map.begin();
-       it != g_tx_map.end();
-       ++it, ++idx)
-  {
-    samples_buf[*it] = outbuf[idx];
-  }
+  std::copy(g_tx_map.begin(), g_tx_map.end(), samples_buf);
 
   return true;
 }
@@ -218,18 +214,20 @@ VirtualRadio::set_rx_mapping(const iq_map_vec &iq_map)
 }
 
 void
-VirtualRadio::demap_iq_samples(const gr_complex *samples_buf, size_t len)
+VirtualRadio::demap_iq_samples(const iq_sample *samples_buf, size_t len)
 {
-  if (!b_receiver) return;
+  // If the receiver chain was not defined
+  if (not b_receiver){ return;}
 
   /* Copy the samples used by this radio */
   for (size_t idx = 0; idx < g_rx_fft_size; ++idx)
     g_ifft_complex->get_inbuf()[idx] = samples_buf[g_rx_map[idx]];
 
+  // Perform the FFT operation
   g_ifft_complex->execute();
 
   /* Append new samples */
-  rx_buffer->produce(g_ifft_complex->get_outbuf(), g_rx_fft_size);
+  rx_resampler->buffer()->write(g_ifft_complex->get_outbuf(), g_rx_fft_size);
 }
 
 } /* namespace hydra */

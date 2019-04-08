@@ -148,7 +148,7 @@ void
 Hypervisor::tx_run()
 {
   size_t g_tx_sleep_time = llrint(get_tx_fft() * 1e6 / get_tx_bandwidth());
-  window optr(get_tx_fft());
+  iq_window optr(get_tx_fft());
 
   // Even loop
   while (not thr_tx_stop)
@@ -219,7 +219,7 @@ Hypervisor::set_tx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
 }
 
 size_t
-Hypervisor::get_tx_window(window &optr, size_t len)
+Hypervisor::get_tx_window(iq_window &optr, size_t len)
 {
    if (g_vradios.size() == 0) return 0;
 
@@ -263,7 +263,7 @@ void
 Hypervisor::rx_run()
 {
   size_t g_rx_sleep_time = llrint(get_rx_fft() * 1e9 / get_rx_bandwidth());
-  window optr(get_rx_fft());
+  iq_window optr(get_rx_fft());
 
   while (not thr_rx_stop)
   {
@@ -339,7 +339,7 @@ Hypervisor::set_rx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
 }
 
 void
-Hypervisor::forward_rx_window(window &buf, size_t len)
+Hypervisor::forward_rx_window(iq_window &buf, size_t len)
 {
   if (g_vradios.size() == 0) return;
 

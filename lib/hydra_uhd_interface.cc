@@ -85,7 +85,7 @@ device_uhd::set_rx_config(double freq, double rate, double gain)
 }
 
 void
-device_uhd::send(const window &buf, size_t len)
+device_uhd::send(const iq_window &buf, size_t len)
 {
 #ifdef USE_USRP_STREAM_API
     uhd::tx_metadata_t md;
@@ -109,7 +109,7 @@ device_uhd::send(const window &buf, size_t len)
 }
 
 size_t
-device_uhd::receive(window &buf, size_t len)
+device_uhd::receive(iq_window &buf, size_t len)
 {
   uhd::rx_metadata_t md;
 
@@ -172,7 +172,7 @@ device_image_gen::device_image_gen(std::string device_args)
 }
 
 void
-device_image_gen::send(const window &buf, size_t len)
+device_image_gen::send(const iq_window &buf, size_t len)
 {
    static const size_t cols = len;
    static sfft_complex g_ifft_complex = sfft_complex(new fft_complex(len));
@@ -222,21 +222,21 @@ device_image_gen::send(const window &buf, size_t len)
 }
 
 size_t
-device_image_gen::receive(window &buf, size_t len)
+device_image_gen::receive(iq_window &buf, size_t len)
 {
   static const char *str_read = "/home/connect/ofdm.bin";
   static std::ifstream infile(str_read, std::ifstream::binary);
 
   if (not infile.eof())
   {
-    infile.read((char*)&buf.front(), len * sizeof(gr_complex));
+    infile.read((char*)&buf.front(), len * sizeof(iq_sample));
   }
   else
   {
     std::cout << "Reseting file" << std::endl;
     infile.clear();
     infile.seekg(0);
-    infile.read((char*)&buf.front(), len * sizeof(gr_complex));
+    infile.read((char*)&buf.front(), len * sizeof(iq_sample));
   }
 }
 
@@ -245,14 +245,14 @@ device_loopback::device_loopback(std::string device_args)
 }
 
 void
-device_loopback::send(const window &buf, size_t len)
+device_loopback::send(const iq_window &buf, size_t len)
 {
    std::lock_guard<std::mutex> _l(g_mutex);
    g_windows_vec.push_back(buf);
 }
 
 size_t
-device_loopback::receive(window &buf, size_t len)
+device_loopback::receive(iq_window &buf, size_t len)
 {
    while (g_windows_vec.size() == 0) { return 0; };
 
@@ -271,7 +271,7 @@ device_network::device_network(std::string host_addr, std::string remote_addr):
 }
 
 void
-device_network::send(const window &buf, size_t len)
+device_network::send(const iq_window &buf, size_t len)
 {
   if (!init_tx)
   {
@@ -286,7 +286,7 @@ device_network::send(const window &buf, size_t len)
     init_tx = true;
   }
 
-  zmq::message_t message(buf.size() * sizeof(gr_complex));
+  zmq::message_t message(buf.size() * sizeof(iq_sample));
 
   iq_sample *tmp = static_cast<iq_sample *>(message.data());
   for (size_t i = 0; i < buf.size(); ++i)
@@ -296,7 +296,7 @@ device_network::send(const window &buf, size_t len)
 }
 
 size_t
-device_network::receive(window &buf, size_t len)
+device_network::receive(iq_window &buf, size_t len)
 {
   if (!init_rx)
   {

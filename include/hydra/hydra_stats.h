@@ -57,7 +57,7 @@ public:
   xvl_report(){};
   // Constructor
   xvl_report(unsigned int u_type,
-             iq_stream* buffer,
+             sample_stream* buffer,
              unsigned int u_port = 4996);
   // Destructor
   ~xvl_report()
@@ -74,7 +74,7 @@ public:
     context.reset();
   };
   // Publish a given message to the server
-  void push(iq_stream* buffer);
+  void push(sample_stream* buffer);
 };
 
 typedef std::unique_ptr<xvl_report> ReportPtr;

@@ -9,7 +9,7 @@
 
 namespace hydra {
 
-template <typename input_data_type = iq_sample, typename output_data_type = window>
+template <typename input_data_type = iq_sample, typename output_data_type = iq_window>
 class resampler
 {
   private:
@@ -83,32 +83,12 @@ resampler<input_data_type, output_data_type>::resampler(
   run_thread = std::make_unique<std::thread>(&resampler::run, this);
 };
 
-
-template <typename input_data_type, typename output_data_type>
-output_data_type*
-resampler<input_data_type, output_data_type>::consume()
-{
-  // If there is at least a single window in the buffer
-  if (output_buffer.size())
-  {
-    // Return an array with the element
-    output_data_type* k = new window(output_buffer.read().front());
-    return k;
-  }
-  // Otherwise, return null pointer
-  else
-  {
-    return nullptr;
-  }
-};
-
-
 template <typename input_data_type, typename output_data_type>
 void
 resampler<input_data_type, output_data_type>::run()
 {
   // Vector of IQ samples that comprise a FFT window
-  output_data_type temp_object(u_fft_size);
+  // output_data_type temp_object(u_fft_size);
   // Integer to hold the current size of the queue
   long long int ll_cur_size;
 
@@ -119,12 +99,12 @@ resampler<input_data_type, output_data_type>::run()
     if (p_input_buffer->size() >= u_fft_size)
     {
       // Insert IQ samples from the input buffer into the window
-      temp_object = p_input_buffer->read(u_fft_size);
+      // temp_object = p_input_buffer->read(u_fft_size);
     }
 
     //TODO Check the need for resampling here
 
-    output_buffer.write(temp_object);
+    // output_buffer.write(temp_object);
   }
 };
 

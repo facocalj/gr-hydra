@@ -14,7 +14,7 @@
 #include <zmq.hpp>
 
 #include "hydra/types.h"
-#include "hydra/hydra_buffer.h"
+#include "hydra/hydra_buffer.hpp"
 
 // Using name space UDP
 using boost::asio::ip::udp;
@@ -75,7 +75,6 @@ class zmq_source
     void run();
 };
 
-
 class zmq_sink
 {
   public:
@@ -93,7 +92,7 @@ class zmq_sink
                                           const std::string& remote_addr,
                                           const std::string& port)
     {
-      return std::make_unique<zmq_sink>(p_input_buffer, in_mtx, server_addr, remote_addr, port);
+      return std::make_unique<zmq_sink>(input_buffer, server_addr, remote_addr, port);
     }
 
   private:
@@ -125,7 +124,7 @@ public:
 
   /* CTOR
    */
-  tcp_sink(iq_stream* p_input_buffer,
+  tcp_sink(sample_stream* p_input_buffer,
            std::mutex* in_mtx,
            const std::string &s_host,
            const std::string &s_port);
@@ -145,7 +144,7 @@ public:
   // Assign the handle receive callback when a datagram is received
   void transmit();
 
-  static std::unique_ptr<tcp_sink> make(iq_stream* p_input_buffer,
+  static std::unique_ptr<tcp_sink> make(sample_stream* p_input_buffer,
                            std::mutex* in_mtx,
                            const std::string &s_host,
                            const std::string &s_port)
@@ -169,7 +168,7 @@ public:
   std::unique_ptr<std::thread> tx_udp_thread;
 
   // Pointer to output buffer
-  iq_stream* g_input_buffer;
+  sample_stream* g_input_buffer;
 
   // Pointer to the input buffer mutex
   std::mutex* p_in_mtx;
@@ -203,7 +202,7 @@ class udp_source
   void receive();
 
   // Returns pointer to the output buffer
-  iq_stream* buffer(){ return &output_buffer; };
+  sample_stream* buffer(){ return &output_buffer; };
 
   // Returns pointer to the mutex
   std::mutex* mutex() {return &out_mtx;};
@@ -230,7 +229,7 @@ class udp_source
   // Create remainder buffer, which just needs 16 bytes
   std::array<char, IQ_SIZE> remainder_buffer;
   // Create output buffer
-  iq_stream output_buffer;
+  sample_stream output_buffer;
 
   // Counter of bytes remaining from a previous reception
   unsigned int u_remainder;
@@ -252,7 +251,7 @@ public:
 
   /* CTOR
    */
-  udp_sink(iq_stream* p_input_buffer,
+  udp_sink(sample_stream* p_input_buffer,
            std::mutex* in_mtx,
            const std::string &s_host,
            const std::string &s_port);
@@ -272,7 +271,7 @@ public:
   // Assign the handle receive callback when a datagram is received
   void transmit();
 
-  static std::unique_ptr<udp_sink> make(iq_stream* p_input_buffer,
+  static std::unique_ptr<udp_sink> make(sample_stream* p_input_buffer,
                            std::mutex* in_mtx,
                            const std::string &s_host,
                            const std::string &s_port)
@@ -297,7 +296,7 @@ public:
   std::unique_ptr<std::thread> tx_udp_thread;
 
   // Pointer to output buffer
-  iq_stream* g_input_buffer;
+  sample_stream* g_input_buffer;
 
   // Pointer to the input buffer mutex
   std::mutex* p_in_mtx;

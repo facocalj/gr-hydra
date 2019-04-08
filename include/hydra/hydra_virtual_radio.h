@@ -23,7 +23,7 @@
 
 #include <hydra/types.h>
 #include <hydra/hydra_socket.h>
-#include <hydra/hydra_buffer.h>
+#include <hydra/hydra_buffer.hpp>
 #include <hydra/hydra_resampler.hpp>
 #include <hydra/hydra_hypervisor.h>
 #include <hydra/hydra_fft.h>
@@ -70,7 +70,7 @@ class VirtualRadio
     void set_tx_bandwidth(double bw);
     void set_tx_mapping(const iq_map_vec &iq_map);
     size_t const set_tx_fft(size_t n) {return g_tx_fft_size = n;}
-    bool map_tx_samples(gr_complex *samples_buf); // called by the hypervisor
+    bool map_tx_samples(iq_sample *samples_buf); // called by the hypervisor
 
 
     bool const get_rx_enabled(){ return g_rx_udp_port; };
@@ -82,7 +82,7 @@ class VirtualRadio
     void set_rx_bandwidth(double bw);
     void set_rx_mapping(const iq_map_vec &iq_map);
     size_t const set_rx_fft(size_t n) {return g_rx_fft_size = n;}
-    void demap_iq_samples(const gr_complex *samples_buf, size_t len); // called by the hypervisor
+    void demap_iq_samples(const iq_sample *samples_buf, size_t len); // called by the hypervisor
 
     /**
      */
@@ -98,8 +98,8 @@ class VirtualRadio
     samples_vec g_rx_samples;
     sfft_complex g_ifft_complex;
     zmq_sink_ptr rx_socket;
-    std::unique_ptr<resampler<window, iq_sample>> rx_buffer;
-    window_stream* rx_windows;
+    std::unique_ptr<resampler<iq_window, iq_sample>> rx_resampler;
+    hydra_buffer<iq_window>* rx_windows;
     ReportPtr rx_report;
 
     iq_map_vec g_tx_map;
@@ -110,7 +110,7 @@ class VirtualRadio
     double g_tx_cf;      // Central frequency
     double g_tx_bw;      // Bandwidth
     sfft_complex g_fft_complex;
-    std::unique_ptr<resampler<iq_sample, window>> tx_resampler;
+    std::unique_ptr<resampler<iq_sample, iq_window>> tx_resampler;
     zmq_source_ptr tx_socket;
 
     int g_idx;        // Radio unique ID

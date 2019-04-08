@@ -79,7 +79,7 @@ void xvl_monitor::run(void)
 }
 
 xvl_report::xvl_report(unsigned int u_type,
-                       iq_stream* buffer,
+                       sample_stream* buffer,
                        unsigned int u_port)
 {
   // Get the server port
@@ -98,7 +98,7 @@ xvl_report::xvl_report(unsigned int u_type,
                                                  buffer);
 }
 
-void xvl_report::push(iq_stream* buffer)
+void xvl_report::push(sample_stream* buffer)
 {
   // Thread stop condition
   thr_stop = false;
