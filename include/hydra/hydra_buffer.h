@@ -64,6 +64,103 @@ class hydra_buffer
 };
 
 
+template <typename data_type, template<typename, typename> class container_type>
+hydra_buffer<data_type, container_type>::hydra_buffer(){};
+
+template <typename data_type, template<typename, typename> class container_type>
+hydra_buffer<data_type, container_type>::hydra_buffer(unsigned int size)
+{
+  // Allocate a given size for the buffer
+  buffer = container_type<data_type, std::allocator<data_type>> (size);
+}
+
+// Read a number of elements
+template <typename data_type, template<typename, typename> class container_type>
+std::vector<data_type>
+hydra_buffer<data_type, container_type>::read(unsigned int num_elements)
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
+
+  // Create an array to hold the elements
+  std::vector<data_type> elements(num_elements);
+
+  // Copy the given number of elements to the temp array
+  std::copy(buffer.begin(), buffer.begin()+num_elements, elements.begin());
+  // Remove the given numbert of elements from the buffer
+  buffer.erase(buffer.begin(), buffer.begin()+num_elements);
+
+  // Return the array of elements
+  return elements;
+}
+
+// Write a number of the same element in the buffe:
+template <typename data_type, template<typename, typename> class container_type>
+void
+hydra_buffer<data_type, container_type>::write(data_type element, unsigned int num_elements)
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
+
+  // If the writting process will not overflow/overwrite the buffer
+  if (buffer.size() + num_elements <= buffer.capacity())
+  {
+    // Insert N elements at the end
+    buffer.insert(buffer.end(), num_elements, element);
+  }
+}
+
+// Write a number of elements to the buffer
+template <typename data_type, template<typename, typename> class container_type>
+template <typename iterator>
+void
+hydra_buffer<data_type, container_type>::write(iterator begin_it, unsigned int num_elements)
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
+
+  // If the writting process will not overflow/overwrite the buffer
+  if (buffer.size() + num_elements <= buffer.capacity())
+  {
+    // Assign N elements at the end, starting from the begin iterator
+    buffer.insert(buffer.end(), begin_it, begin_it+num_elements);
+  }
+}
+
+// Write a range of elements to the buffer
+template <typename data_type, template<typename, typename> class container_type>
+template <typename iterator>
+void
+hydra_buffer<data_type, container_type>::write(iterator begin_it, iterator end_it)
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
+
+  // If the writting process will not overflow/overwrite the buffer
+  if (buffer.size() + std::distance(begin_it, end_it) <= buffer.capacity())
+  {
+    // Assign a range of elements at the end, between the begin and end iterators
+    buffer.insert(buffer.end(), begin_it, end_it);
+  }
+}
+
+// Access operator
+template <typename data_type, template<typename, typename> class container_type>
+data_type
+hydra_buffer<data_type, container_type>::operator[](unsigned int position)
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
+
+  // Return element at a given position
+  return buffer[position];
+}
+
+
+
+
+
+
 class TxBuffer
 {
 public:
