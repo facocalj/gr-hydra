@@ -72,23 +72,35 @@ hydra_client::discover_server(
     std::string client_ip,
     std::string &server_ip)
 {
-   std::cout <<  "discover_server" << std::endl;;
+    // If printing debug messages
+    if (b_debug_flag)
+    {
+      // Print the response data
+      std::cout <<  "<client> Discovering server" << std::endl;;
+    }
+
+
    const int MAX_MSG = 1000;
    send_udp(client_ip, client_ip, true, 5001);
 
    char msg[MAX_MSG];
    if (recv_udp(msg, MAX_MSG, false, 5002, {5, 0}))
    {
-      std::cout << "Error occurred. Timeout Exceeded" << std::endl;
+      std::cout << "<client> Error occurred. Timeout Exceeded" << std::endl;
       return -1;
    }
    else
    {
-      std::cout << "Received: " << msg << std::endl;
+     // If printing debug messages
+     if (b_debug_flag)
+     {
+       // Print the response data
+      std::cout << "<client> Received: " << msg << std::endl;
+     }
 
-      std::vector<std::string> sp;
-      boost::split(sp, msg, [](char c){return c == ':';});
-      server_ip = sp[0];
+     std::vector<std::string> sp;
+     boost::split(sp, msg, [](char c){return c == ':';});
+     server_ip = sp[0];
    }
 
    return 0;
@@ -143,13 +155,19 @@ hydra_client::request_tx_resources(rx_configuration &tx_conf)
 std::string
 hydra_client::check_connection()
 {
-   std::cout << "check_connection" << std::endl;
-   while (discover_server(s_client_host, s_server_host) < 0) sleep(1);
+  // If printing debug messages
+  if (b_debug_flag)
+  {
+    // Print the response data
+    std::cout << "<client> Checking connection" << std::endl;
+  }
 
-   // Set message type
-   std::string message = "{\"xvl_syn\":\"\"}";
-   // Send message and return acknowledgement
-   return factory(message);
+  while (discover_server(s_client_host, s_server_host) < 0) sleep(1);
+
+  // Set message type
+  std::string message = "{\"xvl_syn\":\"\"}";
+  // Send message and return acknowledgement
+  return factory(message);
 }
 
 std::string
@@ -173,19 +191,17 @@ hydra_client::free_resources()
 std::string
 hydra_client::factory(const std::string &s_message)
 {
-  std::cout << s_message << std::endl;
-
   //  Prepare our context and socket
   zmq::context_t context(1);
   zmq::socket_t socket (context, ZMQ_REQ);
   // Timeout to get out of the while loop since recv is blocking
-  int timeout = 10000;
+  int timeout = 5000;
   socket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
 
   // If printing debug messages
   if (b_debug_flag)
   {
-     std::cout << boost::format("Connecting to XVL server: %s:%s") % s_server_host % s_server_port << std::endl;
+     std::cout << boost::format("<client> Connecting to XVL server: %s:%s") % s_server_host % s_server_port << std::endl;
   }
   // Connect to the XVL Server
   socket.connect (("tcp://" + s_server_host + ":" + s_server_port).c_str());
@@ -193,7 +209,7 @@ hydra_client::factory(const std::string &s_message)
   // If printing debug messages
   if (b_debug_flag)
   {
-    std::cout << "Sending:\t" << s_message.data() << std::endl;
+    std::cout << "<client> Sending: " << s_message.data() << std::endl;
   }
 
   // Create ZMQ message type and copy the message to it
@@ -218,7 +234,7 @@ hydra_client::factory(const std::string &s_message)
     if (b_debug_flag)
     {
       // Print the response data
-      std::cout << s_response << std::endl;
+      std::cout << "<client> Received message: " << s_response << std::endl;
     }
 
     // Return the reply data
@@ -226,7 +242,7 @@ hydra_client::factory(const std::string &s_message)
   }
   else
   {
-    std::cerr << "Server timeout." << std::endl;
+    std::cerr << "<client> Server timeout." << std::endl;
     exit(20);
   }
 }

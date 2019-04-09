@@ -23,11 +23,11 @@ int main()
 
   hydra::hydra_client s1 = hydra::hydra_client("127.0.0.1", 5000, 91, true);
 
-  std::cout<< s1.check_connection() << std::endl;
-  std::cout<< s1.query_resources() << std::endl;
+  s1.check_connection();
+  s1.query_resources();
 
   hydra::rx_configuration tx1{vr_1_cf, vr_1_bw, false};
-  std::cout << s1.request_tx_resources(tx1) << std::endl;
+  s1.request_tx_resources(tx1);
 
 #if 0
   // VR 1 specs
@@ -40,25 +40,25 @@ int main()
 
   hydra::hydra_client s2 = hydra::hydra_client("127.0.0.1", 5000, 92, true);
 
-  std::cout<< s2.check_connection() << std::endl;
-  std::cout<< s2.query_resources() << std::endl;
+  s2.check_connection();
+  s2.query_resources();
 
   hydra::rx_configuration tx2{vr_2_cf, vr_2_bw, false};
-  std::cout << s2.request_tx_resources(tx2) << std::endl;
+  s2.request_tx_resources(tx2);
 #endif
 
   // sleep(1);
   // Free resources from a given service
-  // std::cout << s1.free_resources() << std::endl;
+  // s1.free_resources();
   // Query available resources
-  // std::cout << s1.query_resources() << std::endl;
+  // s1.query_resources();
 
 #if 0
   sleep(1);
   // Free resources from a given service
-  std::cout << s2.free_resources() << std::endl;
+  s2.free_resources();
   // Query available resources
-  std::cout << s2.query_resources() << std::endl;
+  s2.query_resources();
 #endif
 
 
