@@ -27,6 +27,9 @@ class resampler
     // Event loop method
     void run();
 
+    // Create the proper output buffer
+    void create_buffer();
+
     // Hold the FFT size
     unsigned int u_fft_size;
 
@@ -77,8 +80,33 @@ resampler<input_data_type, output_data_type>::resampler(
   // The input buffer
   p_input_buffer = input_buffer;
 
+  // Create a different type of output buffer depending on the template
+  create_buffer();
+
   // Create a thread to receive the data
   run_thread = std::make_unique<std::thread>(&resampler::run, this);
+
+  std::cout << "<resampler> Created resampler" << std::endl;
+
+};
+
+
+template<>
+void
+inline resampler<iq_sample, iq_window>::create_buffer()
+{
+  // Create a buffer with enough capacity for 1000 windows
+  p_output_buffer = std::make_shared<hydra_buffer<iq_window>>(1000);
+
+};
+
+template<>
+void
+inline resampler<iq_window, iq_sample>::create_buffer()
+{
+  // Create a buffer with enough capacity for 1000 windows
+  p_output_buffer = std::make_shared<hydra_buffer<iq_sample>>(1000*u_fft_size);
+
 };
 
 template <>
@@ -90,8 +118,6 @@ inline resampler<iq_sample, iq_window>::run()
 
   // Create a buffer with enough capacity for 1000 windows
   p_output_buffer = std::make_shared<hydra_buffer<iq_window>>(1000);
-
-  std::cout << "<resampler> Created resampler" << std::endl;
 
   // If the destructor has been called
   while (not stop_thread)
@@ -121,11 +147,6 @@ inline resampler<iq_window, iq_sample>::run()
 {
   // Vector of IQ samples that comprise a FFT window
   iq_window temp_object(u_fft_size);
-
-  // Create a buffer with enough capacity for 1000 windows
-  p_output_buffer = std::make_shared<hydra_buffer<iq_sample>>(1000*u_fft_size);
-
-  std::cout << "<resampler> Created resampler" << std::endl;
 
   // If the destructor has been called
   while (not stop_thread)
