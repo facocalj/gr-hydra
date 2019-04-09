@@ -22,13 +22,14 @@
 #define INCLUDED_HYDRA_VIRTUAL_RADIO_H
 
 #include <hydra/types.h>
-#include <hydra/hydra_socket.h>
 #include <hydra/hydra_buffer.hpp>
+#include <hydra/hydra_stats.h>
+
+#include <hydra/hydra_socket.h>
 #include <hydra/hydra_resampler.hpp>
 #include <hydra/hydra_hypervisor.h>
-#include <hydra/hydra_fft.h>
-#include <hydra/hydra_uhd_interface.h>
-#include <hydra/hydra_stats.h>
+#include <hydra/hydra_virtual_rf.h>
+
 
 #include <vector>
 #include <mutex>
@@ -65,11 +66,6 @@ class VirtualRadio
     size_t const get_tx_fft() {return g_rx_fft_size;}
     double const get_tx_freq() { return g_tx_cf; }
     double const get_tx_bandwidth() {return g_tx_bw;}
-    int set_tx_freq(double cf);
-    void set_tx_bandwidth(double bw);
-    void set_tx_mapping(const iq_map_vec &iq_map);
-    size_t const set_tx_fft(size_t n) {return g_tx_fft_size = n;}
-    bool map_tx_samples(iq_sample *samples_buf); // called by the hypervisor
 
 
     bool const get_rx_enabled(){ return g_rx_udp_port; };
@@ -88,32 +84,31 @@ class VirtualRadio
     bool const ready_to_demap_iq_samples();
 
   private:
-    iq_map_vec g_rx_map;
     size_t g_rx_fft_size; // Subcarriers used by this VRadio
     size_t g_rx_udp_port;
+
     bool b_receiver;
     double g_rx_cf;      // Central frequency
     double g_rx_bw;      // Bandwidth
-    samples_vec g_rx_samples;
-    sfft_complex g_ifft_complex;
-    zmq_sink_ptr rx_socket;
-    std::unique_ptr<resampler<iq_window, iq_sample>> rx_resampler;
-    std::shared_ptr<hydra_buffer<iq_window>> rx_windows;
-    ReportPtr rx_report;
 
-    iq_map_vec g_tx_map;
+    ReportPtr rx_report;
+    std::unique_ptr<virtual_rf_source> rx_virtual_rf;
+    std::unique_ptr<resampler<iq_window, iq_sample>> rx_resampler;
+    zmq_sink_ptr rx_socket;
+
     size_t g_tx_fft_size; // Subcarriers used by this VRadio
     size_t g_tx_udp_port;
+
     bool b_transmitter;
-    ReportPtr tx_report;
     double g_tx_cf;      // Central frequency
     double g_tx_bw;      // Bandwidth
-    sfft_complex g_fft_complex;
-    std::unique_ptr<resampler<iq_sample, iq_window>> tx_resampler;
+
+    ReportPtr tx_report;
     zmq_source_ptr tx_socket;
+    std::unique_ptr<resampler<iq_sample, iq_window>> tx_resampler;
+    std::unique_ptr<virtual_rf_sink> tx_virtual_rf;
 
     int g_idx;        // Radio unique ID
-    std::mutex g_mutex;
 
     // pointer to this VR hypervisor
     Hypervisor *p_hypervisor;

@@ -87,103 +87,48 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
                            const std::string &server_addr,
                            const std::string &remote_addr)
 {
-   // If already transmitting
-   if (b_transmitter)
-      // Return error
-      return 1;
+  // If already transmitting
+  if (b_transmitter)
+    // Return error
+    return 1;
 
-   // Set the VR TX UDP port
-   g_tx_udp_port = u_tx_udp;
-   g_tx_bw = d_tx_bw;
-   g_tx_cf = d_tx_cf;
+  // Set the VR TX UDP port
+  g_tx_udp_port = u_tx_udp;
+  g_tx_bw = d_tx_bw;
+  g_tx_cf = d_tx_cf;
 
-   g_tx_fft_size = p_hypervisor->get_tx_fft() * (d_tx_bw / p_hypervisor->get_tx_bandwidth());
+  g_tx_fft_size = p_hypervisor->get_tx_fft() * (d_tx_bw / p_hypervisor->get_tx_bandwidth());
 
-   // Create ZMQ receiver
-   tx_socket = zmq_source::make(
-       server_addr,
-       remote_addr,
-       std::to_string(u_tx_udp),
-       1000*g_tx_fft_size);
+  // Create ZMQ receiver
+  tx_socket = zmq_source::make(
+      server_addr,
+      remote_addr,
+      std::to_string(u_tx_udp),
+      1000*g_tx_fft_size);
 
-   // Create new resampler
-   tx_resampler = std::make_unique<resampler<iq_sample, iq_window>>(
-       tx_socket->buffer(),
-       d_tx_bw,
-       g_tx_fft_size);
-
-   // create fft object
-   g_fft_complex  = sfft_complex(new fft_complex(g_tx_fft_size));
-
-   p_hypervisor->notify(*this, Hypervisor::SET_TX_MAP);
-
-   // Toggle transmitting flag
-   b_transmitter = true;
-
-   // TODO Create TX reports object
-   // tx_report = std::make_unique<xvl_report>(u_id, tx_socket->windows());
-
-   // Successful return
-   return 0;
-}
-
-int
-VirtualRadio::set_tx_freq(double cf)
-{
-  if (cf == g_tx_cf) return 0;
-
-   double old_cf = g_tx_cf;
-   g_tx_cf = cf;
-
-   int err = p_hypervisor->notify(*this, Hypervisor::SET_TX_MAP);
-   if (err < 0)
-      g_tx_cf = old_cf;
-
-   return err;
-}
-
-void
-VirtualRadio::set_tx_bandwidth(double bw)
-{
-  if (bw == g_tx_bw) return;
+  // Create new resampler
+  tx_resampler = std::make_unique<resampler<iq_sample, iq_window>>(
+      tx_socket->buffer(),
+      d_tx_bw,
+      g_tx_fft_size);
 
 
-   double old_bw = g_tx_bw;
-   g_tx_bw = bw;
+  // Create a new virtual RF front-end
+  tx_virtual_rf = std::make_unique<virtual_rf_sink>(
+      tx_resampler->buffer(),
+      g_tx_bw,
+      g_tx_cf,
+      g_tx_fft_size,
+      p_hypervisor); // temporary, maybe the hypervisor should receive a pointer to this guy
 
-   int err = p_hypervisor->notify(*this, Hypervisor::SET_TX_MAP);
-   if (err < 0)
-      g_tx_bw = old_bw;
-}
+  // Toggle transmitting flag
+  b_transmitter = true;
 
-void
-VirtualRadio::set_tx_mapping(const iq_map_vec &iq_map)
-{
-  g_tx_map = iq_map;
-}
+  // TODO Create TX reports object
+  // tx_report = std::make_unique<xvl_report>(u_id, tx_socket->windows());
 
-bool
-VirtualRadio::map_tx_samples(iq_sample *samples_buf)
-{
-  // If the transmitter chain was not defined
-  if (not b_transmitter){return false;}
-
-  // Try to get a window from the resampler
-  auto buf  = tx_resampler->buffer()->read(1);
-
-  // Return false if the window is empty
-  if (buf.empty()){return false;}
-
-  // Copy samples in TIME domain to FFT buffer, execute FFT
-  g_fft_complex->set_data(&buf[0][0], g_tx_fft_size);
-  g_fft_complex->execute();
-  iq_sample *outbuf = g_fft_complex->get_outbuf();
-
-  // map samples in FREQ domain to samples_buff
-  // perfors fft shift
-  std::copy(g_tx_map.begin(), g_tx_map.end(), samples_buf);
-
-  return true;
+  // Successful return
+  return 0;
 }
 
 int

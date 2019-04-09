@@ -22,7 +22,7 @@
 
 #include <hydra/types.h>
 #include <hydra/hydra_fft.h>
-#include <hydra/hydra_virtual_radio.h>
+#include <hydra/hydra_virtual_rf.h>
 #include "hydra/hydra_uhd_interface.h"
 
 #include <algorithm>
@@ -52,7 +52,7 @@ class Hypervisor
 
   /**
    */
-  void attach_virtual_radio(VirtualRadioPtr vr);
+  void attach_virtual_radio(VirtualRFPtr vr);
   bool detach_virtual_radio(size_t radio_id);
 
   /**
@@ -71,7 +71,7 @@ class Hypervisor
      SET_TX_MAP = 0x2,
   };
 
-  int notify(VirtualRadio &vr, Notify set_maps = Notify::SET_NONE);
+  int notify(virtual_rf &vr, Notify set_maps = Notify::SET_NONE);
 
   // Method for stoppping the hypervisor's threads
   void stop()
@@ -92,7 +92,7 @@ class Hypervisor
   void set_tx_bandwidth(double bw){ g_tx_bw = bw; }
   void set_tx_central_frequency(double cf){ g_tx_cf = cf; }
   void set_tx_mapping();
-  int set_tx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map);
+  int set_tx_mapping(virtual_rf_sink &vr, iq_map_vec &subcarriers_map);
   void tx_run();
   size_t get_tx_window(iq_window &optr, size_t len); // where the tx things happen
 
@@ -105,7 +105,7 @@ class Hypervisor
   void set_rx_bandwidth(double bw){ g_rx_bw = bw; }
   void set_rx_central_frequency(double cf){ g_rx_cf = cf; }
   void set_rx_mapping();
-  int set_rx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map);
+  int set_rx_mapping(virtual_rf_source &vr, iq_map_vec &subcarriers_map);
   void rx_run();
   void forward_rx_window(iq_window &optr, size_t len); // where the rx things happen
 
