@@ -19,7 +19,6 @@
 # Install public header files
 ########################################################################
 install(FILES
-  util/udp.h
   types.h
   hydra_fft.h
   hydra_virtual_radio.h
@@ -34,4 +33,10 @@ install(FILES
   hydra_client.h
   hydra_main.h
   hydra_uhd_interface.h
-  DESTINATION include/hydra)
+  DESTINATION include/hydra) 
+
+# Include all the helper headers
+install(DIRECTORY 
+  util/ 
+  DESTINATION include/hydra/util
+)
