@@ -10,7 +10,7 @@ HydraMain::HydraMain(std::string server_addr,
    s_server_addr = server_addr;
 
    // Initialise the stats reporter
-   monitor = std::make_shared<xvl_monitor>(u_monitor_port);
+   // monitor = std::make_shared<xvl_monitor>(u_monitor_port);
    // Initialise the core XVL
    core = std::make_shared<HydraCore>();
 }
@@ -42,7 +42,7 @@ void HydraMain::run()
    server = std::make_shared<HydraServer>(s_server_addr, core);
 
    // Run the statistics reporting server
-   monitor->run();
+   // monitor->run();
 
    // Run the XVL server
    server->run();

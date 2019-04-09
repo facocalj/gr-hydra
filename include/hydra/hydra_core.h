@@ -66,8 +66,7 @@ public:
                             double d_centre_freq,
                             double d_bandwidth,
                             const std::string &server_addr,
-                            const std::string &remote_addr,
-                            bool bpad);
+                            const std::string &remote_addr);
 
    // Query resources
    boost::property_tree::ptree query_resources();

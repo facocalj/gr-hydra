@@ -53,8 +53,7 @@ class VirtualRadio
                     double d_tx_centre_freq,
                     double d_tx_bw,
                     const std::string &server_addr,
-                    const std::string &remote_addr,
-                    bool b_pad = false);
+                    const std::string &remote_addr);
 
     /** Return VRadio unique ID
      * @return VRadio ID

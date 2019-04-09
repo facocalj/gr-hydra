@@ -19,12 +19,11 @@ namespace hydra
 
 struct rx_configuration
 {
-   rx_configuration(double cf, double bw, bool bp): center_freq(cf), bandwidth(bw), bpad(bp) {};
+   rx_configuration(double cf, double bw, bool bp): center_freq(cf), bandwidth(bw) {};
 
    double center_freq;
    double bandwidth;
-   bool bpad;
-   int         server_port;
+   int    server_port;
    std::string server_ip;
 };
 

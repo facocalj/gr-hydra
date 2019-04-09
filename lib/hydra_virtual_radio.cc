@@ -85,8 +85,7 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
                            double d_tx_cf,
                            double d_tx_bw,
                            const std::string &server_addr,
-                           const std::string &remote_addr,
-                           bool b_pad)
+                           const std::string &remote_addr)
 {
    // If already transmitting
    if (b_transmitter)

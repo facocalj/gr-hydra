@@ -19,6 +19,7 @@
 # Install public header files
 ########################################################################
 install(FILES
+  util/udp.h
   types.h
   hydra_fft.h
   hydra_virtual_radio.h

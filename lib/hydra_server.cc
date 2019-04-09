@@ -195,9 +195,8 @@ HydraServer::run()
           }
           else // key == "xvl_rtx"
           {
-            bool bpad = root.get(key + ".padding", false);
             // Try to reserve TX resources
-            u_reserved = p_core->request_tx_resources(u_id, d_cf, d_bw, server_addr_no_port, remote_addr, bpad);
+            u_reserved = p_core->request_tx_resources(u_id, d_cf, d_bw, server_addr_no_port, remote_addr);
           }
 
           // If not able to reserve resources

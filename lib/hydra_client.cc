@@ -33,8 +33,7 @@ hydra_client::request_rx_resources(rx_configuration &rx_conf)
   std::string message = "{\"xvl_rrx\":{\"id\":" + std::to_string(u_id) + "," +
     "\"centre_freq\":" + std::to_string(rx_conf.center_freq) + "," +
     "\"bandwidth\":" + std::to_string(rx_conf.bandwidth) + ", " +
-    "\"ip\":\"" + s_client_host + "\", " +
-    "\"padding\":" + std::to_string(rx_conf.bpad) + "}}";
+    "\"ip\":\"" + s_client_host + "\"" + "}}";
 
   std::stringstream ss;
   // Return the result of the request message
@@ -119,7 +118,6 @@ hydra_client::request_tx_resources(rx_configuration &tx_conf)
   // Set message type
   std::string message = "{\"xvl_rtx\":{\"id\":" + std::to_string(u_id) + "," +
     "\"centre_freq\":" + std::to_string(tx_conf.center_freq) + "," +
-    "\"padding\":" + std::to_string(tx_conf.bpad) + "," +
     "\"ip\":\"" + s_client_host + "\", " +
     "\"bandwidth\":" + std::to_string(tx_conf.bandwidth) + "}}";
 
