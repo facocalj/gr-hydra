@@ -169,13 +169,13 @@ VirtualRadio::map_tx_samples(iq_sample *samples_buf)
   if (not b_transmitter){return false;}
 
   // Try to get a window from the resampler
-  const iq_window buf = tx_resampler->buffer()->read(1)[0];
+  auto buf  = tx_resampler->buffer()->read(1);
 
   // Return false if the window is empty
   if (buf.empty()){return false;}
 
   // Copy samples in TIME domain to FFT buffer, execute FFT
-  g_fft_complex->set_data(&buf.front(), g_tx_fft_size);
+  g_fft_complex->set_data(&buf[0][0], g_tx_fft_size);
   g_fft_complex->execute();
   iq_sample *outbuf = g_fft_complex->get_outbuf();
 

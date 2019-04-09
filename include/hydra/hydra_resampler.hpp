@@ -77,7 +77,6 @@ resampler<input_data_type, output_data_type>::resampler(
   // The input buffer
   p_input_buffer = input_buffer;
 
-
   // Create a thread to receive the data
   run_thread = std::make_unique<std::thread>(&resampler::run, this);
 };
@@ -91,6 +90,8 @@ inline resampler<iq_sample, iq_window>::run()
 
   // Create a buffer with enough capacity for 1000 windows
   p_output_buffer = std::make_shared<hydra_buffer<iq_window>>(1000);
+
+  std::cout << "<resampler> Created resampler" << std::endl;
 
   // If the destructor has been called
   while (not stop_thread)
@@ -123,6 +124,8 @@ inline resampler<iq_window, iq_sample>::run()
 
   // Create a buffer with enough capacity for 1000 windows
   p_output_buffer = std::make_shared<hydra_buffer<iq_sample>>(1000*u_fft_size);
+
+  std::cout << "<resampler> Created resampler" << std::endl;
 
   // If the destructor has been called
   while (not stop_thread)

@@ -172,7 +172,7 @@ Hypervisor::set_tx_mapping()
         it != g_vradios.end();
         ++it)
      {
-        std::cout << "TX setting map for VR " << (*it)->get_id() << std::endl;
+        std::cout << "<hypervisor> TX setting map for VR " << (*it)->get_id() << std::endl;
         set_tx_mapping(*((*it).get()), subcarriers_map);
      }
      g_tx_subcarriers_map = subcarriers_map;
@@ -194,7 +194,7 @@ Hypervisor::set_tx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
      return -1;
    }
 
-   std::cout << "VR " << vr.get_id() << ": CF @" << vr_cf << ", BW @" << vr_bw << ", Offset @" << offset << ", First SC @ " << sc << ". Last SC @" << sc + fft_n << std::endl;
+   std::cout << "<hypervisor> Created vRF for #" << vr.get_id() << ": CF @" << vr_cf << ", BW @" << vr_bw << ", Offset @" << offset << ", First SC @ " << sc << ". Last SC @" << sc + fft_n << std::endl;
 
    // Allocate subcarriers sequentially from sc
    iq_map_vec the_map;
@@ -272,7 +272,7 @@ Hypervisor::rx_run()
   }
 
   // Print debug message
-  // std::cout << "Stopped hypervisor's receiver chain" << std::endl;
+  // std::cout << "<hypervisor> Stopped hypervisor's receiver chain" << std::endl;
 }
 
 void
@@ -287,7 +287,7 @@ Hypervisor::set_rx_mapping()
        it != g_vradios.end();
        ++it)
     {
-      std::cout << "RX setting map for VR " << (*it)->get_id() << std::endl;
+      std::cout << "<hypervisor> RX setting map for VR " << (*it)->get_id() << std::endl;
       set_rx_mapping(*((*it).get()), subcarriers_map);
     }
   g_rx_subcarriers_map = subcarriers_map;
@@ -310,11 +310,12 @@ Hypervisor::set_rx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
       return -1;
    }
 
+   // TODO what this means?
    double c_bw = fft_n*g_rx_bw/rx_fft_len;
    double c_cf = g_rx_cf - g_rx_bw/2 + (g_rx_bw/rx_fft_len) * (sc + (fft_n/2));
 
-   std::cout << boost::format("RX Request VR BW: %1%, CF: %2% ") % vr_bw % vr_cf << std::endl;
-   std::cout << boost::format("RX Actual  VR BW: %1%, CF: %2% ") % c_bw % c_cf << std::endl;
+   std::cout << boost::format("<hypervisor> RX Request VR BW: %1%, CF: %2% ") % vr_bw % vr_cf << std::endl;
+   std::cout << boost::format("<hypervisor> RX Actual  VR BW: %1%, CF: %2% ") % c_bw % c_cf << std::endl;
 
    // Allocate subcarriers sequentially from sc
    iq_map_vec the_map;
@@ -343,7 +344,7 @@ Hypervisor::forward_rx_window(iq_window &buf, size_t len)
 {
   if (g_vradios.size() == 0) return;
 
-    g_fft_complex->set_data(&buf.front(), len);
+    g_fft_complex->set_data(&buf[0], len);
     g_fft_complex->execute();
 
     std::lock_guard<std::mutex> _l(vradios_mtx);

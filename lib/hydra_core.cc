@@ -58,7 +58,7 @@ HydraCore::request_rx_resources(unsigned int u_id,
   if (not b_receiver)
   {
     // Return error -- zero is bad
-    std::cout << "RX Resources not configured. Rejecting request." << std::endl;
+    std::cout << "<core> RX Resources not configured." << std::endl;
     return 0;
   }
 
@@ -82,8 +82,6 @@ HydraCore::request_rx_resources(unsigned int u_id,
   // Try to reserve the resource chunks
   if(p_resource_manager->reserve_rx_resources(u_id, d_centre_freq, d_bandwidth))
   {
-    // Return error -- zero is bad
-    std::cout << "RX Resources already in use. Rejecting request." << std::endl;
     return 0;
   }
 
@@ -98,7 +96,7 @@ HydraCore::request_rx_resources(unsigned int u_id,
   vr->set_rx_chain(u_udp_port, d_centre_freq, d_bandwidth, server_addr, remote_addr);
 
    // If able to create all of it, return the port number
-  std::cout << "RX Resources allocated successfully." << std::endl;
+  std::cout << "<core> RX Resources allocated successfully." << std::endl;
   return u_udp_port++;
 }
 
@@ -114,8 +112,9 @@ HydraCore::request_tx_resources(unsigned int u_id,
   // If not configured to transmit
   if (not b_transmitter)
   {
-      // Return error -- zero is bad
-      return 0;
+    // Return error -- zero is bad
+    std::cout << "<core> TX Resources not configured." << std::endl;
+    return 0;
   }
 
   // Tey to find the given VR
@@ -142,7 +141,6 @@ HydraCore::request_tx_resources(unsigned int u_id,
     return 0;
   }
 
-
   static size_t u_udp_port = 33500;
   if (vr == nullptr)
   {
@@ -156,6 +154,7 @@ HydraCore::request_tx_resources(unsigned int u_id,
   }
 
   // If able to create all of it, return the port number
+  std::cout << "<core> TX Resources allocated successfully." << std::endl;
   return u_udp_port++;
 }
 

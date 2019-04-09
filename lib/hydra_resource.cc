@@ -1,5 +1,6 @@
 #include "hydra/hydra_resource.h"
 
+#include <boost/format.hpp>
 
 namespace hydra {
 
@@ -267,11 +268,26 @@ rf_front_end::create_chunks(double d_centre_freq,
     // Create a chunk for the given service
     (*it) = chunk(d_centre_freq, d_bandwidth, u_id);
 
+
     // Change the result flag -- zero is a great signal
     result = 0;
+    // Break the while loop and exit
     break;
 
   } // End for loop
+
+  // Depending on the results
+  if (result)
+  {
+    // Output some debug information
+    std::cout << "<resource> Could not reserve " << d_bandwidth << "[Hz] at " << d_centre_freq << "[Hz] for Virtual Radio #" << u_id << std::endl;
+  }
+  else
+  {
+    // Output some debug information
+    std::cout << "<resource> Reserved " << d_bandwidth << "[Hz] at " << d_centre_freq << "[Hz] for Virtual Radio #" << u_id << std::endl;
+  }
+
 
   return result;
 }
