@@ -69,7 +69,7 @@ resampler<input_data_type, output_data_type>::resampler(
     double sampling_rate,
     size_t fft_size)
 {
-  // Thread stio flag
+  // Thread stop flag
   stop_thread = false;
 
   // Number of IQ samples per FFT window

@@ -29,19 +29,19 @@ HydraServer::auto_discovery()
    int rx_port = 5001;
    int tx_port = 5002;
 
-   std::cout << "Waiting for data on port UDP " <<  rx_port << std::endl;
+   std::cout << "<server/autodiscovery> Waiting for data on port UDP " <<  rx_port << std::endl;
 
    // Event loop stop condition
    while (not thr_stop)
    {
-      rcv = recv_udp(msg, MAX_MSG, true, rx_port);
+      rcv = recv_udp(msg, MAX_MSG, true, rx_port, {1, 0});
 
       if (rcv != -1)
         send_udp(msg, s_server_addr, false, tx_port);
    }
 
    // Output debug information
-   // std::cout << "Stopped autodiscovery" << std::endl;
+   // std::cout << "<server/audodiscovery> Stopped autodiscovery" << std::endl;
 }
 
 // Run the server
@@ -98,7 +98,7 @@ HydraServer::run()
       else
       {
         // Output real error mesage
-        std::cout << "ZMQ Error. " << e.what() << std::endl;
+        std::cout << "<server> ZMQ Error. " << e.what() << std::endl;
       }
     }
 
@@ -109,7 +109,7 @@ HydraServer::run()
       std::stringstream ss; ss << std::string(static_cast<char*>(request.data()),
                                            request.size());
 
-      std::cout << std::string(static_cast<char*>(request.data()), request.size()) << std::endl;
+      std::cout << "<server> Request: " << std::string(static_cast<char*>(request.data()), request.size()) << std::endl;
 
       // Create output JSON tree
       boost::property_tree::ptree output_tree;
@@ -136,12 +136,12 @@ HydraServer::run()
 
       // Extract key from the JSON tree
       std::string key = root.front().first;
-      std::cout << "key: " << key << std::endl;
+      // std::cout << "key: " << key << std::endl;
 
       // Sync message, reply with status
       if (boost::iequals(key, "xvl_syn"))
       {
-        std::cout << "XVL Sync Message" << std::endl;
+        std::cout << "<server> XVL Sync Message" << std::endl;
 
         // Add the content
         content.put("status", true);
@@ -152,7 +152,7 @@ HydraServer::run()
       // Query message, reply with the current allocation
       else if (boost::iequals(key , "xvl_que"))
       {
-        std::cout << "XVL Query Message" << std::endl;
+        std::cout << "<server> XVL Query Message" << std::endl;
 
         // Add the content
         content.put("status", true);
@@ -164,8 +164,7 @@ HydraServer::run()
       else if (boost::iequals(key, "xvl_rrx") or
                boost::iequals(key, "xvl_rtx"))
       {
-        std::cout << "XVL Request Message" << std::endl;
-        std::cout << key << std::endl;
+        std::cout << "<server> XVL Request Message" << std::endl;
 
         // Extract the request arguments
         double d_cf = root.get(key + ".centre_freq", 0.0);
@@ -225,17 +224,17 @@ HydraServer::run()
       // Free message, try to free resources and reply the result
       else if (boost::iequals(key, "xvl_fre"))
       {
-        std::cout << "XVL Free Message" << std::endl;
+        std::cout << "<server> XVL Free Message" << std::endl;
 
         // Extract the request arguments
         unsigned int u_id = root.get("xvl_fre.id", 0);
 
-        std::cout << "SERVER: u_id:" << u_id << std::endl;
+        std::cout << "<server> u_id:" << u_id << std::endl;
 
         // Check if they are invalid
         if (not u_id)
         {
-          std::cout << "SERVER: not u_id:" << u_id << std::endl;
+          std::cout << "<server> not u_id:" << u_id << std::endl;
           // Add the content
           content.put("status", false);
           content.put("message","Missing or invalid parameters.");
@@ -246,7 +245,7 @@ HydraServer::run()
         else
         {
           // Try to reserve resources
-          std::cout << "SERVER: calling p_core->free_resources" << std::endl;
+          std::cout << "<server>: calling p_core->free_resources" << std::endl;
           if ( not p_core->free_resources(u_id))
           {
             // Add the content
@@ -268,7 +267,7 @@ HydraServer::run()
       // Otherwise, unknown message
       else
       {
-        std::cout << "Unknown Message. Rejecting" << std::endl;
+        std::cout << "<server> Unknown Message. Rejecting" << std::endl;
         // Add the content
         content.put("status", false);
         content.put("message","Unknown message: " + key);
@@ -276,12 +275,19 @@ HydraServer::run()
         output_tree.add_child("xvl_err", content);
       }
 
+
+
       // Create a string stream
       std::stringstream es;
       // Write the tree as a JSON string
       boost::property_tree::json_parser::write_json(es, output_tree);
       // Return it as a string
       std::string response_message = es.str();
+
+      boost::erase_all(response_message, "\n");
+      boost::erase_all(response_message, " ");
+
+      std::cout << "<server> Reply: " << response_message << std::endl;
 
       //  Send reply back to client
       zmq::message_t reply(response_message.size());
@@ -292,14 +298,14 @@ HydraServer::run()
   } // While loop
 
   // Close the ZMQ primitives
-  // socket.close();
+  socket.close();
   // context.close();
 
   // Join the autodiscovery thread
   autod.join();
 
   // Output message when server stops
-  std::cout << "Stopped XVL Server" << std::endl;
+  std::cout << "<server> Stopped XVL Server" << std::endl;
 
   return 0;
 }

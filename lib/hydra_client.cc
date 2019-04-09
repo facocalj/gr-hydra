@@ -68,15 +68,16 @@ hydra_client::request_rx_resources(rx_configuration &rx_conf)
 
 
 int
-hydra_client::discover_server(std::string client_ip,
-                std::string &server_ip)
+hydra_client::discover_server(
+    std::string client_ip,
+    std::string &server_ip)
 {
-  std::cout <<  "discover_server" << std::endl;;
+   std::cout <<  "discover_server" << std::endl;;
    const int MAX_MSG = 1000;
    send_udp(client_ip, client_ip, true, 5001);
 
    char msg[MAX_MSG];
-   if (recv_udp(msg, MAX_MSG, false, 5002, {4, 0}))
+   if (recv_udp(msg, MAX_MSG, false, 5002, {5, 0}))
    {
       std::cout << "Error occurred. Timeout Exceeded" << std::endl;
       return -1;
@@ -177,6 +178,9 @@ hydra_client::factory(const std::string &s_message)
   //  Prepare our context and socket
   zmq::context_t context(1);
   zmq::socket_t socket (context, ZMQ_REQ);
+  // Timeout to get out of the while loop since recv is blocking
+  int timeout = 10000;
+  socket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
 
   // If printing debug messages
   if (b_debug_flag)
@@ -200,21 +204,31 @@ hydra_client::factory(const std::string &s_message)
 
   //  Get the reply.
   zmq::message_t reply;
-  socket.recv (&reply);
 
-  // Extract the text from the reply message
-  std::string s_response = std::string(static_cast<char*>(reply.data()),
-                                       reply.size());
+  int rc = 0;
+  rc = socket.recv (&reply);
 
-  // If printing debug messages
-  if (b_debug_flag)
+  if (rc)
   {
-    // Print the response data
-    std::cout << s_response << std::endl;
-  }
+    // Extract the text from the reply message
+    std::string s_response = std::string(static_cast<char*>(reply.data()),
+                                         reply.size());
 
-  // Return the reply data
-  return s_response.data();
+    // If printing debug messages
+    if (b_debug_flag)
+    {
+      // Print the response data
+      std::cout << s_response << std::endl;
+    }
+
+    // Return the reply data
+    return s_response.data();
+  }
+  else
+  {
+    std::cerr << "Server timeout." << std::endl;
+    exit(20);
+  }
 }
 
 } /* namespace hydra */
