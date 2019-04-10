@@ -49,14 +49,16 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
   g_rx_bw = d_rx_bw;
 
   g_rx_fft_size = p_hypervisor->get_rx_fft() * (d_rx_bw / p_hypervisor->get_rx_bandwidth());
-  g_ifft_complex  = sfft_complex(new fft_complex(g_rx_fft_size, false));
 
-  // TODO this must be shared with the hypervisor, or come from it
-  rx_windows = std::make_shared<hydra_buffer<iq_window>>(1000);
+  // Create a new virtual RF front-end
+  rx_virtual_rf = std::make_unique<virtual_rf_source>(
+      g_tx_bw,
+      g_tx_cf,
+      g_tx_fft_size,
 
   // Create new resampler
   rx_resampler = std::make_unique<resampler<iq_window, iq_sample>>(
-      rx_windows,
+      rx_virtual_rf->buffer(),
       d_rx_bw,
       g_rx_fft_size);
 
@@ -131,51 +133,6 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
   return 0;
 }
 
-int
-VirtualRadio::set_rx_freq(double cf)
-{
-  double old_cf = g_rx_cf;
-  g_rx_cf = cf;
 
-  int err = p_hypervisor->notify(*this);
-  if (err < 0)
-    g_rx_cf = old_cf;
-
-  return err;
-}
-
-void
-VirtualRadio::set_rx_bandwidth(double bw)
-{
-  double old_bw = g_rx_bw;
-  g_rx_bw = bw;
-
-  int err = p_hypervisor->notify(*this);
-  if (err < 0)
-    g_rx_bw = old_bw;
-}
-
-void
-VirtualRadio::set_rx_mapping(const iq_map_vec &iq_map)
-{
-  g_rx_map = iq_map;
-}
-
-void
-VirtualRadio::demap_iq_samples(const iq_sample *samples_buf, size_t len)
-{
-  // If the receiver chain was not defined
-  if (not b_receiver){ return;}
-
-  /* Copy the samples used by this radio */
-  for (size_t idx = 0; idx < g_rx_fft_size; ++idx)
-    g_ifft_complex->get_inbuf()[idx] = samples_buf[g_rx_map[idx]];
-
-  // Perform the FFT operation
-  g_ifft_complex->execute();
-
-  /* Append new samples */
-  rx_resampler->buffer()->write(g_ifft_complex->get_outbuf(), g_rx_fft_size);
-}
 
 } /* namespace hydra */
