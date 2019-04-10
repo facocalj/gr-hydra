@@ -109,7 +109,7 @@ zmq_sink::run()
   // Bind address
   socket.bind(addr.c_str());
   // Set timeout for send operation
-  socket.setsockopt(ZMQ_SNDTIMEO, 2000);
+  socket.setsockopt(ZMQ_SNDTIMEO, 1000);
 
   // Temp container for incoming IQ samples
   std::vector<iq_sample> tmp;

@@ -58,7 +58,6 @@ hydra_client::request_rx_resources(rx_configuration &rx_conf)
   {
     rx_conf.server_port = root.get("xvl_rep.udp_port", 0);
     rx_conf.server_ip = s_server_host;
-
     return 0;
   }
 

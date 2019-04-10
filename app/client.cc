@@ -26,7 +26,7 @@ int main()
   s1.check_connection();
   s1.query_resources();
 
-  hydra::rx_configuration tx1{vr_1_cf, vr_1_bw, false};
+  hydra::rx_configuration tx1{vr_1_cf, vr_1_bw};
   s1.request_tx_resources(tx1);
 
 #if 0

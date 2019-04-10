@@ -19,7 +19,7 @@ namespace hydra
 
 struct rx_configuration
 {
-   rx_configuration(double cf, double bw, bool bp): center_freq(cf), bandwidth(bw) {};
+   rx_configuration(double cf, double bw): center_freq(cf), bandwidth(bw) {};
 
    double center_freq;
    double bandwidth;

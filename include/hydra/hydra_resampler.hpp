@@ -116,9 +116,6 @@ inline resampler<iq_sample, iq_window>::run()
   // Vector of IQ samples that comprise a FFT window
   iq_window temp_object(u_fft_size);
 
-  // Create a buffer with enough capacity for 1000 windows
-  p_output_buffer = std::make_shared<hydra_buffer<iq_window>>(1000);
-
   // If the destructor has been called
   while (not stop_thread)
   {

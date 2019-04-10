@@ -20,7 +20,7 @@ import threading
 
 class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
 
-    def __init__(self, ansibleIP='192.168.5.241', freqrx=1.42e9 + 3e6, freqtx=1.42e9, mul=0.01, samp_rate=200e3, vr1offset=-300e3, vr2offset=700e3):
+    def __init__(self, ansibleIP='192.168.5.126', freqrx=2e9, freqtx=2e9, mul=0.01, samp_rate=200e3, vr1offset=-300e3, vr2offset=700e3):
         gr.top_block.__init__(self, "Ansible Hydra Gr Client 1Tx 1Rx")
 
         ##################################################
@@ -126,7 +126,7 @@ class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
 def argument_parser():
     parser = OptionParser(usage="%prog: [options]", option_class=eng_option)
     parser.add_option(
-        "", "--ansibleIP", dest="ansibleIP", type="string", default='192.168.5.241',
+        "", "--ansibleIP", dest="ansibleIP", type="string", default='192.168.5.126',
         help="Set ansibleIP [default=%default]")
     return parser
 

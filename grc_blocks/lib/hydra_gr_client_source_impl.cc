@@ -48,19 +48,27 @@ void hydra_gr_client_source_impl::start_client(double d_center_frequency,
                                                double d_samp_rate,
                                                size_t u_payload)
 {
-  rx_configuration rx_config{d_center_frequency, d_samp_rate, false};
+  rx_configuration rx_config{d_center_frequency, d_samp_rate};
   int err = client->request_rx_resources(rx_config);
 
   if (!err)
   {
 #if 1
     std::string addr = "tcp://" + rx_config.server_ip + ":" + std::to_string(rx_config.server_port);
-    std::cout << "addr: " << addr << std::endl;
+    std::cout << "<hydra/source> Server Address: " << addr << std::endl;
+
+    std::cout << "making ZMQ" << std::endl;
     gr::zeromq::pull_source::sptr d_source = gr::zeromq::pull_source::make(sizeof(gr_complex),
                                              1,
                                              const_cast<char *>(addr.c_str()));
+
+    std::cout << "made ZMQ" << std::endl;
+
 #endif
     connect(d_source, 0, self(), 0);
+
+    std::cout << "made connection" << std::endl;
+
   }
   else
   {
