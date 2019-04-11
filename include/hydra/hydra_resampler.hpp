@@ -4,7 +4,7 @@
 #include <thread>
 #include <chrono>
 
-#include "hydra/hydra_buffer.h"
+#include "hydra/hydra_buffer.hpp"
 #include "hydra/types.h"
 
 

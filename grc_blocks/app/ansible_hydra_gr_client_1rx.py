@@ -3,20 +3,9 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Ansible Hydra Gr Client 1Rx
-# Generated: Thu Apr 11 13:50:12 2019
+# Generated: Thu Apr 11 17:27:14 2019
 ##################################################
 
-if __name__ == '__main__':
-    import ctypes
-    import sys
-    if sys.platform.startswith('linux'):
-        try:
-            x11 = ctypes.cdll.LoadLibrary('libX11.so')
-            x11.XInitThreads()
-        except:
-            print "Warning: failed to XInitThreads()"
-
-from PyQt4 import Qt
 from gnuradio import blocks
 from gnuradio import digital
 from gnuradio import eng_notation
@@ -25,35 +14,12 @@ from gnuradio.eng_option import eng_option
 from gnuradio.filter import firdes
 from optparse import OptionParser
 import hydra
-import sys
-from gnuradio import qtgui
 
 
-class ansible_hydra_gr_client_1rx(gr.top_block, Qt.QWidget):
+class ansible_hydra_gr_client_1rx(gr.top_block):
 
     def __init__(self, ansibleIP='127.0.0.1', freqrx=2e9, freqtx=2e9, mul=0.01, samp_rate=200e3, vr1offset=-300e3, vr2offset=700e3):
         gr.top_block.__init__(self, "Ansible Hydra Gr Client 1Rx")
-        Qt.QWidget.__init__(self)
-        self.setWindowTitle("Ansible Hydra Gr Client 1Rx")
-        qtgui.util.check_set_qss()
-        try:
-            self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
-        except:
-            pass
-        self.top_scroll_layout = Qt.QVBoxLayout()
-        self.setLayout(self.top_scroll_layout)
-        self.top_scroll = Qt.QScrollArea()
-        self.top_scroll.setFrameStyle(Qt.QFrame.NoFrame)
-        self.top_scroll_layout.addWidget(self.top_scroll)
-        self.top_scroll.setWidgetResizable(True)
-        self.top_widget = Qt.QWidget()
-        self.top_scroll.setWidget(self.top_widget)
-        self.top_layout = Qt.QVBoxLayout(self.top_widget)
-        self.top_grid_layout = Qt.QGridLayout()
-        self.top_layout.addLayout(self.top_grid_layout)
-
-        self.settings = Qt.QSettings("GNU Radio", "ansible_hydra_gr_client_1rx")
-        self.restoreGeometry(self.settings.value("geometry").toByteArray())
 
         ##################################################
         # Parameters
@@ -70,8 +36,8 @@ class ansible_hydra_gr_client_1rx(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
         self.hydra_gr__source_0_0 = hydra.hydra_gr_client_source(1, ansibleIP, ansibleIP, 5000)
-        self.hydra_gr__source_0_0.start_client(freqrx + vr1offset, samp_rate * 2, 10000)
-
+        self.hydra_gr__source_0_0.start_client(freqrx + vr1offset, samp_rate * 2, 10000) 
+          
         self.digital_ofdm_rx_0 = digital.ofdm_rx(
         	  fft_len=64, cp_len=16,
         	  frame_length_tag_key='frame_'+"len",
@@ -89,15 +55,10 @@ class ansible_hydra_gr_client_1rx(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.msg_connect((self.blocks_tagged_stream_to_pdu_0, 'pdus'), (self.blocks_tuntap_pdu_1, 'pdus'))
-        self.connect((self.digital_ofdm_rx_0, 0), (self.blocks_tag_debug_0, 0))
-        self.connect((self.digital_ofdm_rx_0, 0), (self.blocks_tagged_stream_to_pdu_0, 0))
-        self.connect((self.hydra_gr__source_0_0, 0), (self.digital_ofdm_rx_0, 0))
-
-    def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "ansible_hydra_gr_client_1rx")
-        self.settings.setValue("geometry", self.saveGeometry())
-        event.accept()
+        self.msg_connect((self.blocks_tagged_stream_to_pdu_0, 'pdus'), (self.blocks_tuntap_pdu_1, 'pdus'))    
+        self.connect((self.digital_ofdm_rx_0, 0), (self.blocks_tag_debug_0, 0))    
+        self.connect((self.digital_ofdm_rx_0, 0), (self.blocks_tagged_stream_to_pdu_0, 0))    
+        self.connect((self.hydra_gr__source_0_0, 0), (self.digital_ofdm_rx_0, 0))    
 
     def get_ansibleIP(self):
         return self.ansibleIP
@@ -154,21 +115,14 @@ def main(top_block_cls=ansible_hydra_gr_client_1rx, options=None):
     if options is None:
         options, _ = argument_parser().parse_args()
 
-    from distutils.version import StrictVersion
-    if StrictVersion(Qt.qVersion()) >= StrictVersion("4.5.0"):
-        style = gr.prefs().get_string('qtgui', 'style', 'raster')
-        Qt.QApplication.setGraphicsSystem(style)
-    qapp = Qt.QApplication(sys.argv)
-
     tb = top_block_cls(ansibleIP=options.ansibleIP)
     tb.start()
-    tb.show()
-
-    def quitting():
-        tb.stop()
-        tb.wait()
-    qapp.connect(qapp, Qt.SIGNAL("aboutToQuit()"), quitting)
-    qapp.exec_()
+    try:
+        raw_input('Press Enter to quit: ')
+    except EOFError:
+        pass
+    tb.stop()
+    tb.wait()
 
 
 if __name__ == '__main__':
