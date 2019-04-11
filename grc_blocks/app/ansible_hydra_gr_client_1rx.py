@@ -2,11 +2,21 @@
 # -*- coding: utf-8 -*-
 ##################################################
 # GNU Radio Python Flow Graph
-# Title: Ansible Hydra Gr Client 1Tx 1Rx
-# Generated: Wed Mar 13 01:16:45 2019
+# Title: Ansible Hydra Gr Client 1Rx
+# Generated: Thu Apr 11 13:50:12 2019
 ##################################################
 
+if __name__ == '__main__':
+    import ctypes
+    import sys
+    if sys.platform.startswith('linux'):
+        try:
+            x11 = ctypes.cdll.LoadLibrary('libX11.so')
+            x11.XInitThreads()
+        except:
+            print "Warning: failed to XInitThreads()"
 
+from PyQt4 import Qt
 from gnuradio import blocks
 from gnuradio import digital
 from gnuradio import eng_notation
@@ -15,13 +25,35 @@ from gnuradio.eng_option import eng_option
 from gnuradio.filter import firdes
 from optparse import OptionParser
 import hydra
-import threading
+import sys
+from gnuradio import qtgui
 
 
-class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
+class ansible_hydra_gr_client_1rx(gr.top_block, Qt.QWidget):
 
     def __init__(self, ansibleIP='127.0.0.1', freqrx=2e9, freqtx=2e9, mul=0.01, samp_rate=200e3, vr1offset=-300e3, vr2offset=700e3):
-        gr.top_block.__init__(self, "Ansible Hydra Gr Client 1Tx 1Rx")
+        gr.top_block.__init__(self, "Ansible Hydra Gr Client 1Rx")
+        Qt.QWidget.__init__(self)
+        self.setWindowTitle("Ansible Hydra Gr Client 1Rx")
+        qtgui.util.check_set_qss()
+        try:
+            self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
+        except:
+            pass
+        self.top_scroll_layout = Qt.QVBoxLayout()
+        self.setLayout(self.top_scroll_layout)
+        self.top_scroll = Qt.QScrollArea()
+        self.top_scroll.setFrameStyle(Qt.QFrame.NoFrame)
+        self.top_scroll_layout.addWidget(self.top_scroll)
+        self.top_scroll.setWidgetResizable(True)
+        self.top_widget = Qt.QWidget()
+        self.top_scroll.setWidget(self.top_widget)
+        self.top_layout = Qt.QVBoxLayout(self.top_widget)
+        self.top_grid_layout = Qt.QGridLayout()
+        self.top_layout.addLayout(self.top_grid_layout)
+
+        self.settings = Qt.QSettings("GNU Radio", "ansible_hydra_gr_client_1rx")
+        self.restoreGeometry(self.settings.value("geometry").toByteArray())
 
         ##################################################
         # Parameters
@@ -37,20 +69,9 @@ class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
-        self.hydra_gr_sink_0 = hydra.hydra_gr_client_sink(1, ansibleIP, 5000)
-        self.hydra_gr_sink_0.start_client(freqtx + vr1offset, samp_rate * 2, 1024)
         self.hydra_gr__source_0_0 = hydra.hydra_gr_client_source(1, ansibleIP, ansibleIP, 5000)
         self.hydra_gr__source_0_0.start_client(freqrx + vr1offset, samp_rate * 2, 10000)
 
-        self.digital_ofdm_tx_0 = digital.ofdm_tx(
-        	  fft_len=64, cp_len=16,
-        	  packet_length_tag_key="len",
-        	  bps_header=1,
-        	  bps_payload=1,
-        	  rolloff=0,
-        	  debug_log=False,
-        	  scramble_bits=False
-        	 )
         self.digital_ofdm_rx_0 = digital.ofdm_rx(
         	  fft_len=64, cp_len=16,
         	  frame_length_tag_key='frame_'+"len",
@@ -64,20 +85,19 @@ class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
         (self.blocks_tuntap_pdu_1).set_max_output_buffer(100000)
         self.blocks_tagged_stream_to_pdu_0 = blocks.tagged_stream_to_pdu(blocks.byte_t, "len")
         self.blocks_tag_debug_0 = blocks.tag_debug(gr.sizeof_char*1, 'VR1 RX', ""); self.blocks_tag_debug_0.set_display(True)
-        self.blocks_pdu_to_tagged_stream_0 = blocks.pdu_to_tagged_stream(blocks.byte_t, "len")
-        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_vcc((mul, ))
 
         ##################################################
         # Connections
         ##################################################
         self.msg_connect((self.blocks_tagged_stream_to_pdu_0, 'pdus'), (self.blocks_tuntap_pdu_1, 'pdus'))
-        self.msg_connect((self.blocks_tuntap_pdu_1, 'pdus'), (self.blocks_pdu_to_tagged_stream_0, 'pdus'))
-        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.hydra_gr_sink_0, 0))
-        self.connect((self.blocks_pdu_to_tagged_stream_0, 0), (self.digital_ofdm_tx_0, 0))
         self.connect((self.digital_ofdm_rx_0, 0), (self.blocks_tag_debug_0, 0))
         self.connect((self.digital_ofdm_rx_0, 0), (self.blocks_tagged_stream_to_pdu_0, 0))
-        self.connect((self.digital_ofdm_tx_0, 0), (self.blocks_multiply_const_vxx_0, 0))
         self.connect((self.hydra_gr__source_0_0, 0), (self.digital_ofdm_rx_0, 0))
+
+    def closeEvent(self, event):
+        self.settings = Qt.QSettings("GNU Radio", "ansible_hydra_gr_client_1rx")
+        self.settings.setValue("geometry", self.saveGeometry())
+        event.accept()
 
     def get_ansibleIP(self):
         return self.ansibleIP
@@ -102,7 +122,6 @@ class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
 
     def set_mul(self, mul):
         self.mul = mul
-        self.blocks_multiply_const_vxx_0.set_k((self.mul, ))
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -131,13 +150,25 @@ def argument_parser():
     return parser
 
 
-def main(top_block_cls=ansible_hydra_gr_client_1tx_1rx, options=None):
+def main(top_block_cls=ansible_hydra_gr_client_1rx, options=None):
     if options is None:
         options, _ = argument_parser().parse_args()
 
+    from distutils.version import StrictVersion
+    if StrictVersion(Qt.qVersion()) >= StrictVersion("4.5.0"):
+        style = gr.prefs().get_string('qtgui', 'style', 'raster')
+        Qt.QApplication.setGraphicsSystem(style)
+    qapp = Qt.QApplication(sys.argv)
+
     tb = top_block_cls(ansibleIP=options.ansibleIP)
     tb.start()
-    tb.wait()
+    tb.show()
+
+    def quitting():
+        tb.stop()
+        tb.wait()
+    qapp.connect(qapp, Qt.SIGNAL("aboutToQuit()"), quitting)
+    qapp.exec_()
 
 
 if __name__ == '__main__':

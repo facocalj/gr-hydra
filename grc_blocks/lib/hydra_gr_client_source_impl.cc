@@ -58,9 +58,10 @@ void hydra_gr_client_source_impl::start_client(double d_center_frequency,
     std::cout << "<hydra/source> Server Address: " << addr << std::endl;
 
     std::cout << "making ZMQ" << std::endl;
+    char * ad = "tcp://127.0.0.1:33000";
     gr::zeromq::pull_source::sptr d_source = gr::zeromq::pull_source::make(sizeof(gr_complex),
                                              1,
-                                             const_cast<char *>(addr.c_str()));
+                                             ad);
 
     std::cout << "made ZMQ" << std::endl;
 
