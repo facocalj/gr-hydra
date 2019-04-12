@@ -42,7 +42,7 @@ main(int argc, const char *argv[])
       ("rx_fft", value<unsigned int>()->default_value(1024), "Receiver FFT Size")
       ("host", value<std::string>()->default_value("127.0.0.1"), "Server Host")
       ("port", value<unsigned int>()->default_value(5000), "Server Port")
-      ("backend", value<std::string>()->default_value("usrp"), "Backend (usrp, loop, plot)");
+      ("backend", value<std::string>()->default_value("usrp"), "Backend (usrp, loop, plot, file)");
 
     // Instantiate variables map, store, and notify methods
     variables_map vm;
@@ -90,6 +90,11 @@ main(int argc, const char *argv[])
       backend = std::make_shared<hydra::device_image_gen>();
       std::cout << "Plot Image Backend" <<std::endl;
     }
+    else if (backend_type == "file")
+    {
+      backend = std::make_shared<hydra::device_file>();
+      std::cout << "File Backend" <<std::endl;
+    }
     else
     {
       // Throw error if the backend is not valid
@@ -119,11 +124,11 @@ main(int argc, const char *argv[])
      d_tx_samp_rate,
      u_tx_fft_size);
 
-   hydra_instance->set_rx_config(
-     backend,
-     d_rx_centre_freq,
-     d_rx_samp_rate,
-     u_rx_fft_size);
+   // hydra_instance->set_rx_config(
+     // backend,
+     // d_rx_centre_freq,
+     // d_rx_samp_rate,
+     // u_rx_fft_size);
 
    /* Run server */
    hydra_instance->run();

@@ -9,7 +9,6 @@ device_uhd::device_uhd(std::string device_args)
    usrp = uhd::usrp::multi_usrp::make(device_args);
 }
 
-
 void
 device_uhd::release()
 {
@@ -27,11 +26,9 @@ device_uhd::release()
   }
 }
 
-
 device_uhd::~device_uhd()
 {
 }
-
 
 void
 device_uhd::set_tx_config(double freq, double rate, double gain)
@@ -263,6 +260,62 @@ device_loopback::receive(iq_window &buf, size_t len)
    return buf.size();
 }
 
+// File source and sink device
+device_file::device_file(std::string file_name)
+{
+  // Get the file name
+  s_file_name = file_name;
+}
+
+void
+device_file::set_tx_config(double freq, double rate, double gain)
+{
+  // Get the TX sampling rate
+  tx_rate = rate;
+
+  std::cout << "<banckend/file> Limiting write to " << rate << "samples/second." << std::endl;
+
+  // Congigure the output stream
+  output_file_stream.open(s_file_name, std::ios::out | std::ios::binary | std::ios::trunc);
+}
+
+void
+device_file::set_rx_config(double freq, double rate, double gain)
+{
+  // Get the RX sampling rate
+  rx_rate = rate;
+
+  std::cout << "<banckend/file> Limiting read to " << rate << "samples/second." << std::endl;
+
+  // Configure the input stream
+  input_file_stream.open(s_file_name, std::ios::in| std::ios::binary);
+}
+
+void
+device_file::send(const iq_window &buf, size_t len)
+{
+  // Sleep for the appropriate amount of time
+  std::this_thread::sleep_for(std::chrono::microseconds(static_cast<unsigned long>((len*1e6)/tx_rate)));
+
+  // for (auto it = buf.begin(); it != buf.end(); it++)
+  // {
+    // std::cout << (*it) << " ";
+  // }
+  // std::cout << std::endl;
+
+  // Write the buffer to file
+  output_file_stream.write(reinterpret_cast<const char *>(buf.data()), len * sizeof(iq_sample));
+}
+
+size_t
+device_file::receive(iq_window &buf, size_t len)
+{
+  // Sleep for the appropriate amount of time
+  std::this_thread::sleep_for(std::chrono::microseconds(static_cast<unsigned long>((len*1e6)/rx_rate)));
+
+  // Read the file onto a buffer
+  input_file_stream.read(reinterpret_cast<char *>(buf.data()), len * sizeof(iq_sample));
+}
 
 device_network::device_network(std::string host_addr, std::string remote_addr):
   g_host_addr(host_addr),

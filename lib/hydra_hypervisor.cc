@@ -226,7 +226,7 @@ Hypervisor::set_tx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
 size_t
 Hypervisor::get_tx_window(iq_window &optr, size_t len)
 {
-   if (g_vradios.size() == 0) return 0;
+  if (g_vradios.size() == 0) return 0;
 
   {
     std::lock_guard<std::mutex> _l(vradios_mtx);

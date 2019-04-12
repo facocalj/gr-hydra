@@ -91,6 +91,44 @@ private:
    window_stream g_windows_vec;
 };
 
+class device_file: public abstract_device
+{
+public:
+  // Contructor
+  device_file(std::string file_name = "trace.fc32");
+
+  // TX method
+  void send(const iq_window &buf, size_t len);
+
+  // RX method
+  size_t receive(iq_window &buf, size_t len);
+
+  // Configure the TX and RX chains
+  void set_tx_config(double freq, double rate, double gain);
+  void set_rx_config(double freq, double rate, double gain);
+
+  // Release device
+  void release ()
+  {
+    // Close the file stream
+    input_file_stream.close();
+    output_file_stream.close();
+  };
+
+private:
+  // Filename
+  std::string s_file_name;
+
+  // Declare input and output file streams
+  std::ifstream input_file_stream;
+  std::ofstream output_file_stream;
+
+  // Hold the sampling rates
+  double tx_rate;
+  double rx_rate;
+
+};
+
 class device_network: public abstract_device
 {
 public:

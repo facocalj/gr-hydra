@@ -128,7 +128,15 @@ inline resampler<iq_sample, iq_window>::run()
       //TODO Check the need for resampling here
 
       p_output_buffer->write(temp_object);
+
+      /*
+      for (auto it = temp_object.begin(); it != temp_object.end(); it++)
+      {
+        std::cout << (*it) << " ";
       }
+      std::cout << std::endl;
+      */
+    }
     // Otherwise, we are not there yet
     else
     {
@@ -158,7 +166,7 @@ inline resampler<iq_window, iq_sample>::run()
        */
 
       // Insert IQ samples from the input buffer into the window
-      temp_object = p_input_buffer->read(1)[0];
+      temp_object = p_input_buffer->read_one();
 
       //TODO Check the need for resampling here
 

@@ -44,6 +44,9 @@ class hydra_buffer
     // Read a number of elements
     std::vector<data_type> read(unsigned int num_elements = 1);
 
+    // Read a single elements
+    data_type read_one();
+
     // Write a number of the same element in the buffer
     void write(data_type element, unsigned int num_elements = 1);
 
@@ -69,6 +72,35 @@ hydra_buffer<data_type, container_type>::hydra_buffer(unsigned int size)
   // Allocate a given size for the buffer
   buffer = container_type<data_type, std::allocator<data_type>> (size);
 }
+
+// Read a number of elements
+template <typename data_type, template<typename, typename> class container_type>
+data_type
+hydra_buffer<data_type, container_type>::read_one()
+{
+  // Lock access to the inner buffer structure
+  std::lock_guard<std::mutex> lock(buffer_mutex);
+
+  // If we have at least one elemen to be consumed
+  if (buffer.size())
+  {
+    // Copy the first element
+    data_type element = buffer.front();
+    // Remove the first element from the buffer
+    buffer.pop_front();
+
+    // Return the element
+    return element;
+  }
+  // Ops, not there yet
+  else
+  {
+    // Return a default constructed instance, i.e., empty vector
+    return {};
+  }
+
+}
+
 
 // Read a number of elements
 template <typename data_type, template<typename, typename> class container_type>
