@@ -37,6 +37,9 @@ Hypervisor::Hypervisor(size_t _fft_m_len,
 {
    g_fft_complex  = sfft_complex(new fft_complex(rx_fft_len));
    g_ifft_complex = sfft_complex(new fft_complex(tx_fft_len, false));
+
+  // Set chains to undefined
+  b_tx_chain = b_rx_chain = false;
 };
 
 size_t
@@ -140,6 +143,8 @@ Hypervisor::set_tx_resources(uhd_hydra_sptr tx_dev, double cf, double bw, size_t
 
    // Thread stop flag
    thr_tx_stop = false;
+   // Toggle TX chain flag
+   b_tx_chain = true;
 
    g_tx_thread = std::make_unique<std::thread>(&Hypervisor::tx_run, this);
 }
@@ -255,6 +260,8 @@ Hypervisor::set_rx_resources(uhd_hydra_sptr rx_dev, double cf, double bw, size_t
 
   // Thread stop flag
   thr_rx_stop = false;
+  // Toggle RX chain flag
+  b_rx_chain = true;
 
   g_rx_thread = std::make_unique<std::thread>(&Hypervisor::rx_run, this);
 }

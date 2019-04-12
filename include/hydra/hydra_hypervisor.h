@@ -76,10 +76,19 @@ class Hypervisor
   // Method for stoppping the hypervisor's threads
   void stop()
   {
-    // Stop the TX thread
-    stop_tx();
-    // Stop the RX thread
-    stop_rx();
+    // If the TX chain was configured
+    if (b_tx_chain)
+    {
+      // Stop the TX thread
+      stop_tx();
+    }
+
+    // If the RX chain was configured
+    if (b_rx_chain)
+    {
+      // Stop the RX thread
+      stop_rx();
+    }
 
     std::cout << "Stopped the Hypervisor service" << std::endl;
   }
@@ -120,6 +129,8 @@ private:
   std::unique_ptr<std::thread> g_tx_thread;
   iq_map_vec g_tx_subcarriers_map; // mapping of subcarriers
   uhd_hydra_sptr g_tx_dev;
+  bool b_tx_chain;
+
 
   // Stop the process loop and join TX thread
   void stop_tx()
@@ -137,6 +148,7 @@ private:
   std::unique_ptr<std::thread> g_rx_thread;
   iq_map_vec g_rx_subcarriers_map; // mapping of subcarriers
   uhd_hydra_sptr g_rx_dev;
+  bool b_rx_chain;
 
   // Stop the process loop and join RX thread
   void stop_rx()
