@@ -20,20 +20,25 @@ namespace hydra {
 class HydraCore
 {
 private:
-   // Pointer to the resource manager object
-   std::unique_ptr<xvl_resource_manager> p_resource_manager;
-   std::unique_ptr<Hypervisor> p_hypervisor;
+  // Pointer to the resource manager object
+  std::unique_ptr<xvl_resource_manager> p_resource_manager;
+  std::unique_ptr<Hypervisor> p_hypervisor;
 
-   // Save the receiver info
-   bool b_receiver;
+  // Save the receiver info
+  bool b_receiver;
 
-   // Save the transmitter info
-   bool b_transmitter;
+  // Save the transmitter info
+  bool b_transmitter;
 
-   // Set of occupied UDP ports
-   std::set<unsigned int> used_ports;
+  // Set of occupied UDP ports
+  std::set<unsigned int> used_ports;
 
-   std::mutex g_mutex;
+  std::vector<VirtualRadio> g_virtual_radios;
+
+  std::mutex g_mutex;
+
+  VirtualRadioPtr HydrCore::get_virtual_radio(size_t id);
+
 
 public:
    // Constructor

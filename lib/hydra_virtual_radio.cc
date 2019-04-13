@@ -24,14 +24,12 @@ namespace hydra {
 
 VirtualRadio::VirtualRadio(size_t _idx, Hypervisor *hypervisor):
    g_idx(_idx),
-   p_hypervisor(hypervisor),
    b_receiver(false),
    b_transmitter(false),
    g_rx_udp_port(0),
    g_tx_udp_port(0)
 {
 }
-
 
 int
 VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
@@ -54,7 +52,7 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
   rx_virtual_rf = std::make_unique<virtual_rf_source>(
       g_tx_bw,
       g_tx_cf,
-      g_tx_fft_size,
+      g_tx_fft_size);
 
   // Create new resampler
   rx_resampler = std::make_unique<resampler<iq_window, iq_sample>>(
@@ -68,9 +66,6 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
       server_addr,
       remote_addr,
       std::to_string(u_rx_udp));
-
-  /* Always in the end. */
-  p_hypervisor->notify(*this, Hypervisor::SET_RX_MAP);
 
   /* Toggle receiving flag */
   b_receiver = true;
@@ -120,8 +115,7 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
       tx_resampler->buffer(),
       g_tx_bw,
       g_tx_cf,
-      g_tx_fft_size,
-      p_hypervisor); // temporary, maybe the hypervisor should receive a pointer to this guy
+      g_tx_fft_size);
 
   // Toggle transmitting flag
   b_transmitter = true;

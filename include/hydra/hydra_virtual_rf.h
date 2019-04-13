@@ -48,8 +48,7 @@ class virtual_rf_sink : public virtual_rf
       std::shared_ptr<hydra_buffer<iq_window>> input_buffer,
       double d_bandwidth,
       double d_centre_freq,
-      unsigned int u_fft_size,
-      Hypervisor *hypervisor);
+      unsigned int u_fft_size);
 
     void set_fft_size(unsigned int size);
     void set_cenfre_freq(double bw);
@@ -80,12 +79,16 @@ class virtual_rf_source: public virtual_rf
 
     ~virtual_rf_source();
 
-    virtual_rf_sink(
-      std::shared_ptr<hydra_buffer<iq_window>> input_buffer,
+    virtual_rf_source(
       double d_bandwidth,
       double d_centre_freq,
-      unsigned int u_fft_size,
-      Hypervisor *hypervisor);
+      unsigned int u_fft_size);
+
+    // Return pointer to the internal buffer
+    std::shared_ptr<hydra_buffer<iq_window>> buffer()
+    {
+      return p_output_buffer;
+    };
 
     void set_fft_size(unsigned int size);
     void set_cenfre_freq(double bw);

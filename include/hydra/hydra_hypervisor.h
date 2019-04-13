@@ -43,35 +43,11 @@ class Hypervisor
              double central_frequency,
              double bandwidth);
 
-  /**
-   * @param cf VRadio central frequency
-   * @param bandwidth VRadio bandwidth
-   * @return New radio id
-   */
-  size_t create_vradio(double cf, double bandwidth);
-
-  /**
-   */
-  void attach_virtual_radio(VirtualRFPtr vr);
-  bool detach_virtual_radio(size_t radio_id);
-
-  /**
-   * @param idx
-   * @return vradio_ptr to VR
-   */
-  VirtualRadioPtr const get_vradio(size_t idx);
-
-  /** Called by Virtual Radio instances to notify changes
-   * @param vr
-   * @return -1 if error, 0 otherwise
-   */
   enum Notify {
      SET_NONE = 0x0,
      SET_RX_MAP = 0x1,
      SET_TX_MAP = 0x2,
   };
-
-  int notify(virtual_rf &vr, Notify set_maps = Notify::SET_NONE);
 
   // Method for stoppping the hypervisor's threads
   void stop()
@@ -91,11 +67,11 @@ class Hypervisor
   void set_tx_resources(uhd_hydra_sptr tx_dev, double cf, double bw, size_t fft_len);
   void set_tx_bandwidth(double bw){ g_tx_bw = bw; }
   void set_tx_central_frequency(double cf){ g_tx_cf = cf; }
+
   void set_tx_mapping();
   int set_tx_mapping(virtual_rf_sink &vr, iq_map_vec &subcarriers_map);
-  void tx_run();
-  size_t get_tx_window(iq_window &optr, size_t len); // where the tx things happen
 
+  void tx_run();
 
   // RX related methods
   double const get_rx_central_frequency() { return g_rx_cf; }
@@ -104,10 +80,11 @@ class Hypervisor
   void set_rx_resources(uhd_hydra_sptr rx_dev, double cf, double bw, size_t fft_len);
   void set_rx_bandwidth(double bw){ g_rx_bw = bw; }
   void set_rx_central_frequency(double cf){ g_rx_cf = cf; }
+
   void set_rx_mapping();
   int set_rx_mapping(virtual_rf_source &vr, iq_map_vec &subcarriers_map);
+
   void rx_run();
-  void forward_rx_window(iq_window &optr, size_t len); // where the rx things happen
 
 
 private:

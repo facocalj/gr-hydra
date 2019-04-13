@@ -39,57 +39,6 @@ Hypervisor::Hypervisor(size_t _fft_m_len,
    g_ifft_complex = sfft_complex(new fft_complex(tx_fft_len, false));
 };
 
-size_t
-Hypervisor::create_vradio(double cf, double bandwidth)
-{
-   size_t fft_n = bandwidth / (g_tx_bw / tx_fft_len);
-   vradio_ptr vradio(new VirtualRadio(g_vradios.size(), this));
-
-
-   std::lock_guard<std::mutex> _l(vradios_mtx);
-   g_vradios.push_back(vradio);
-
-   // ID representing the radio;
-   return g_vradios.size() - 1;
-}
-
-void
-Hypervisor::attach_virtual_radio(VirtualRadioPtr vradio)
-{
-  /* Check if VirtualRadio with same id is already attached */
-   auto vr = get_vradio(vradio->get_id());
-   if (vr != nullptr)
-      return;
-
-   std::lock_guard<std::mutex> _l(vradios_mtx);
-   g_vradios.push_back(vradio);
-}
-
-VirtualRadioPtr
-const Hypervisor::get_vradio(size_t id)
-{
-   auto it = std::find_if(g_vradios.begin(), g_vradios.end(),
-                          [id](const VirtualRadioPtr obj) {return obj->get_id() == id;});
-
-   if (it == g_vradios.end())
-      return nullptr;
-
-   return *it;
-}
-
-bool
-Hypervisor::detach_virtual_radio(size_t radio_id)
-{
-  std::lock_guard<std::mutex> _l(vradios_mtx);
-
-  auto new_end = std::remove_if(g_vradios.begin(), g_vradios.end(),
-                                [radio_id](const auto & vr) {
-                                  return vr->get_id() == radio_id; });
-
-  g_vradios.erase(new_end, g_vradios.end());
-  return true;
-}
-
 int
 Hypervisor::notify(virtual_rf &vr, Hypervisor::Notify set_maps)
 {
@@ -148,14 +97,17 @@ void
 Hypervisor::tx_run()
 {
   size_t g_tx_sleep_time = llrint(get_tx_fft() * 1e6 / get_tx_bandwidth());
-  iq_window optr(get_tx_fft());
+  iq_window g_tx_window(get_tx_fft());
 
   // Even loop
   while (not thr_tx_stop)
   {
-    get_tx_window(optr , get_tx_fft());
-    g_tx_dev->send(optr, get_tx_fft());
-    std::fill(optr.begin(), optr.end(), std::complex<float>(0,0));
+    // Populate TX window
+    build_tx_window(&g_tx_window);
+    // Send TX window
+    g_tx_dev->send(&g_tx_window);
+    // Fill TX window with empty samples
+    std::fill(g_tx_window.begin(), g_tx_window.end(), std::complex<float>(0,0));
   }
 
   // Print debug message
@@ -218,29 +170,29 @@ Hypervisor::set_tx_mapping(virtual_rf_sink &vr, iq_map_vec &subcarriers_map)
    return 1;
 }
 
-size_t
-Hypervisor::get_tx_window(iq_window &optr, size_t len)
+void
+Hypervisor::build_tx_window(iq_window *tx_window)
 {
-   if (g_vradios.size() == 0) return 0;
+  // If the list if empty, return false
+  if (g_virtual_radios.empty()){return nullptr;}
 
+  // Otherwise, lock this context
+  std::lock_guard<std::mutex> hyper_tx_lock(tx_mutex);
+
+  // Iterate over the list of TX front ends
+  for (auto it = g_tx_rfs.begin(); it != g_tx_rfs.end(); it++)
   {
-    std::lock_guard<std::mutex> _l(vradios_mtx);
-
-    for (vradio_vec::iterator it = g_vradios.begin();
-         it != g_vradios.end();
-         ++it)
-    {
-      if ((*it)->get_tx_enabled())
-        (*it)->map_tx_samples(g_ifft_complex->get_inbuf());
-    }
+    (*it)->map_tx_samples(g_ifft_complex->get_inbuf());
   }
 
+  // Map them to frequency domain
   g_ifft_complex->execute();
 
-  optr.assign(g_ifft_complex->get_outbuf(),
-              g_ifft_complex->get_outbuf() + len);
-
-  return len;
+  // Map result to Tx window
+  std::copy(
+      g_ifft_complex->get_outbuf(),
+      g_ifft_complex->get_outbuf() + len,
+      g_tx_window->begin());
 }
 
 void
@@ -263,12 +215,14 @@ void
 Hypervisor::rx_run()
 {
   size_t g_rx_sleep_time = llrint(get_rx_fft() * 1e9 / get_rx_bandwidth());
-  iq_window optr(get_rx_fft());
+  iq_window g_tx_window(get_tx_fft());
 
   while (not thr_rx_stop)
   {
-    if (g_rx_dev->receive(optr, get_rx_fft()))
-      forward_rx_window(optr, get_rx_fft());
+    // Send TX window
+    g_tx_dev->receive(&g_rx_window);
+    // Populate TX window
+    build_rx_window(&g_rx_window);
   }
 
   // Print debug message
@@ -340,21 +294,25 @@ Hypervisor::set_rx_mapping(vrtual_rf_source &vr, iq_map_vec &subcarriers_map)
 }
 
 void
-Hypervisor::forward_rx_window(iq_window &buf, size_t len)
+Hypervisor::build_rx_window(iq_window *tx_window)
 {
-  if (g_vradios.size() == 0) return;
+  // If the list if empty, return false
+  if (g_virtual_radios.empty()){return nullptr;}
 
-    g_fft_complex->set_data(&buf[0], len);
-    g_fft_complex->execute();
+  // Otherwise, lock this context
+  std::lock_guard<std::mutex> hyper_rx_lock(rx_mutex);
 
-    std::lock_guard<std::mutex> _l(vradios_mtx);
-    for (vradio_vec::iterator it = g_vradios.begin();
-         it != g_vradios.end();
-         ++it)
-      {
-        if ((*it)->get_rx_enabled())
+  g_fft_complex->set_data(&buf[0], len);
+  g_fft_complex->execute();
+
+
+  // Iterate over the list of TX front ends
+  for (auto it = g_rx_rfs.begin(); it != g_rx_rfs.end(); it++)
+  {
+    (*it)->demaprtx_samples(g_ifft_complex->get_inbuf());
+  }
+
           (*it)->demap_iq_samples(g_fft_complex->get_outbuf(), get_rx_fft());
-      }
 }
 
 } /* namespace hydra */

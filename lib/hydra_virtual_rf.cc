@@ -42,8 +42,7 @@ virtual_rf_sink::virtual_rf_sink(
     std::shared_ptr<hydra_buffer<iq_window>> input_buffer,
     double d_bandwidth,
     double d_centre_freq,
-    unsigned int u_fft_size,
-    Hypervisor* hypervisor)
+    unsigned int u_fft_size)
 {
   // Number of IQ samples per FFT window
   g_fft_size = u_fft_size;
@@ -55,12 +54,8 @@ virtual_rf_sink::virtual_rf_sink(
   // The input buffer
   p_input_buffer = input_buffer;
 
-  p_hypervisor = hypervisor; // temporary
-
   // create fft object
   g_fft_complex  = sfft_complex(new fft_complex(g_fft_size));
-
-  p_hypervisor->notify(*this, Hypervisor::SET_TX_MAP);
 }
 
 
@@ -95,8 +90,7 @@ virtual_rf_sink::map_tx_samples(iq_sample *samples_buf)
 virtual_rf_source::virtual_rf_source(
     double d_bandwidth,
     double d_centre_freq,
-    unsigned int u_fft_size,
-    Hypervisor* hypervisor)
+    unsigned int u_fft_size)
 {
   // Number of IQ samples per FFT window
   g_fft_size = u_fft_size;
@@ -105,16 +99,11 @@ virtual_rf_source::virtual_rf_source(
   // Front-end CF
   g_centre_freq = d_centre_freq;
 
-  // The input buffer
-
+  // The output buffer
   p_output_buffer= std::make_shared<hydra_buffer<iq_window>>(1000);
-
-  p_hypervisor = hypervisor; // temporary
 
   // create fft object
   g_ifft_complex  = sfft_complex(new fft_complex(g_rx_fft_size, false));
-
-  p_hypervisor->notify(*this, Hypervisor::SET_RX_MAP);
 }
 
 
