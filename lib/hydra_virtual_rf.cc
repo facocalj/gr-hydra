@@ -62,12 +62,16 @@ virtual_rf_sink::virtual_rf_sink(
 void
 virtual_rf_sink::set_tx_mapping(const iq_map_vec &iq_map)
 {
+
+  // TODO move to hypervisor
   g_tx_map = iq_map;
 }
 
 bool
 virtual_rf_sink::map_tx_samples(iq_sample *samples_buf)
 {
+
+  // TODO Run method
 
   // Try to get a window from the resampler
   auto buf  = p_input_buffer->read(1);
