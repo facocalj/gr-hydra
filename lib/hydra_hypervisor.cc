@@ -39,6 +39,102 @@ Hypervisor::Hypervisor(size_t _fft_m_len,
    g_ifft_complex = sfft_complex(new fft_complex(tx_fft_len, false));
 };
 
+
+std::tuple<size_t, iq_map_vec, double, double>
+Hypervisor::create_tx_map(size_t u_vr_id, double d_vr_tx_cf, double d_vr_tx_bw, VirtualRFSinkPtr vsink)
+{
+  // Calculate the VR TX FFT size as a function of the allocated resources
+  unsigned int u_vr_tx_fft_size = g_tx_fft_size * (d_vr_tx_bw / d_tx_bw);
+  // Frequency offset between VR and RR
+  double freq_offset = (d_vr_tx_cf - d_vr_tx_bw/2.0) - (g_tx_cf - g_tx_bw/2.0);
+  // FFT offset
+  int carrier_offset = freq_offset / (g_tx_bw / g_tx_fft_size);
+
+  // TODO check with Maicon, shouldn't it be CO + FFT size?
+  if ((carrier_offset < 0) or(carrier_offset > g_tx_fft_size)){return -1;}
+
+  // Claculate the actual bandwidth and centre frequency
+  double d_actual_vr_tx_bw = u_vr_tx_fft_size * g_tx_bw/g_tx_fft_size;
+  // TODO the following equation can be simplified
+  double d_actual_vr_tx_cf = g_rx_cf - (g_rx_bw/2.0) + (g_rx_bw/g_rx_fft_size) * (carrier_offset + (u_vr_tx_fft_size/2));
+
+  // Output debug information
+  std::cout << boost::format("<hypervisor> VR #%1%, Offset: %2%, First SC: %3%, Last SC: %4% ") % u_id % freq_offset % carrier_offset % carrier_offset + u_vr_tx_fft_size << std::endl;
+  std::cout << boost::format("<hypervisor> TX Request VR BW: %1%, CF: %2% ") % d_vr_tx_bw % d_vr_tx_cf << std::endl;
+  std::cout << boost::format("<hypervisor> TX Actual  VR BW: %1%, CF: %2% ") % d_actual_vr_tx_bw % d_actual_vr_tx_cf << std::endl;
+
+  // If there is a Virtual RF Front-end Sink
+  if (vsink != nullptr)
+  {
+    // Create a new FFT map
+    iq_map_vec fft_map(u_vr_tx_fft_size);
+    // Allocate subcarriers sequentially from sc
+    for (int i = carrier_offset; i < carrier_offset + u_vr_tx_fft_size; i++)
+    {
+      //LOG_IF(subcarriers_map[i] != -1, INFO) << "Subcarrier @" <<  i << " already allocated";
+      if (subcarriers_map[i] != -1){return -1;}
+
+      // Write the FFT map and the subcarrier map
+      fft_map[i - carrier_offset] = i;
+      g_subcarriers_map[carrier_offset] = u_id;
+    }
+    // Set the FFT size and FFT map
+    vsink->set_tx_fft(u_vr_tx_fft_size);
+    vsink->set_tx_map(fft_map);
+  } // VSink
+
+  // Return tuple with the new parameters
+  return {u_vr_tx_fft_size, fft_map, d_actual_vr_tx_cf, d_actual_vr_tx_bw};
+}
+
+std::tuple<size_t, iq_map_vec, double, double>
+Hypervisor::create_rx_map(size_t u_vr_id, double d_vr_rx_cf, double d_vr_rx_bw, VirtualRFSourcePtr vsource)
+{
+  // Calculate the VR RX FFT size as a function of the allocated resources
+  unsigned int u_vr_rx_fft_size = g_rx_fft_size * (d_vr_rx_bw / d_rx_bw);
+  // Frequency offset between VR and RR
+  double freq_offset = (d_vr_rx_cf - d_vr_rx_bw/2.0) - (g_rx_cf - g_rx_bw/2.0);
+  // FFT offset
+  int carrier_offset = freq_offset / (g_rx_bw / g_rx_fft_size);
+
+  // TODO check with Maicon, shouldn't it be CO + FFT size?
+  if ((carrier_offset < 0) or(carrier_offset > g_rx_fft_size)){return -1;}
+
+  // Claculate the actual bandwidth and centre frequency
+  double d_actual_vr_rx_bw = u_vr_rx_fft_size * g_rx_bw/g_rx_fft_size;
+  // TODO the following equation can be simplified
+  double d_actual_vr_rx_cf = g_rx_cf - (g_rx_bw/2.0) + (g_rx_bw/g_rx_fft_size) * (carrier_offset + (u_vr_rx_fft_size/2));
+
+  // Output debug information
+  std::cout << boost::format("<hypervisor> VR #%1%, Offset: %2%, First SC: %3%, Last SC: %4% ") % u_id % freq_offset % carrier_offset % carrier_offset + u_vr_rx_fft_size << std::endl;
+  std::cout << boost::format("<hypervisor> RX Request VR BW: %1%, CF: %2% ") % d_vr_rx_bw % d_vr_rx_cf << std::endl;
+  std::cout << boost::format("<hypervisor> RX Actual  VR BW: %1%, CF: %2% ") % d_actual_vr_rx_bw % d_actual_vr_rx_cf << std::endl;
+
+  // If there is a Virtual RF Front-end Sink
+  if (vsource != nullptr)
+  {
+    // Create a new FFT map
+    iq_map_vec fft_map(u_vr_rx_fft_size);
+    // Allocate subcarriers sequentially from sc
+    for (int i = carrier_offset; i < carrier_offset + u_vr_rx_fft_size; i++)
+    {
+      //LOG_IF(subcarriers_map[i] != -1, INFO) << "Subcarrier @" <<  i << " already allocated";
+      if (subcarriers_map[i] != -1){return -1;}
+
+      // Write the FFT map and the subcarrier map
+      fft_map[i - carrier_offset] = i;
+      g_subcarriers_map[carrier_offset] = u_id;
+    }
+    // Set the FFT size and FFT map
+    vsource->set_rx_fft(u_vr_rx_fft_size);
+    vsource->set_rx_map(fft_map);
+  } // VSource
+
+  // Return tuple with the new parameters
+  return {u_vr_rx_fft_size, fft_map, d_actual_vr_rx_cf, d_actual_vr_rx_bw};
+}
+
+
 int
 Hypervisor::notify(virtual_rf &vr, Hypervisor::Notify set_maps)
 {
@@ -83,7 +179,7 @@ Hypervisor::set_tx_resources(uhd_hydra_sptr tx_dev, double cf, double bw, size_t
    g_tx_dev = tx_dev;
    g_tx_cf = cf;
    g_tx_bw = bw;
-   tx_fft_len = fft;
+   g_tx_fft_size = fft;
    g_tx_subcarriers_map = iq_map_vec(fft, -1);
    g_ifft_complex = sfft_complex(new fft_complex(fft, false));
 
@@ -130,45 +226,7 @@ Hypervisor::set_tx_mapping()
      g_tx_subcarriers_map = subcarriers_map;
 }
 
-int
-Hypervisor::set_tx_mapping(virtual_rf_sink &vr, iq_map_vec &subcarriers_map)
-{
-   double vr_bw = vr.get_tx_bandwidth();
-   double vr_cf = vr.get_tx_freq();
-   double offset = (vr_cf - vr_bw/2.0) - (g_tx_cf - g_tx_bw/2.0) ;
 
-   // First VR subcarrier
-   int sc = offset / (g_tx_bw / tx_fft_len);
-   size_t fft_n = vr_bw /(g_tx_bw /tx_fft_len);
-
-   if (sc < 0 || sc > tx_fft_len)
-   {
-     return -1;
-   }
-
-   std::cout << "<hypervisor> Created vRF for #" << vr.get_id() << ": CF @" << vr_cf << ", BW @" << vr_bw << ", Offset @" << offset << ", First SC @ " << sc << ". Last SC @" << sc + fft_n << std::endl;
-
-   // Allocate subcarriers sequentially from sc
-   iq_map_vec the_map;
-   for (; sc < tx_fft_len; sc++)
-   {
-      //LOG_IF(subcarriers_map[sc] != -1, INFO) << "Subcarrier @" <<  sc << " already allocated";
-      if (subcarriers_map[sc] != -1)
-         return -1;
-
-      the_map.push_back(sc);
-      subcarriers_map[sc] = vr.get_id();
-
-      // break when we allocated enough subcarriers
-      if (the_map.size() == fft_n)
-         break;
-   }
-
-   vr.set_tx_fft(fft_n);
-   vr.set_tx_mapping(the_map);
-
-   return 1;
-}
 
 void
 Hypervisor::build_tx_window(iq_window *tx_window)
@@ -201,7 +259,7 @@ Hypervisor::set_rx_resources(uhd_hydra_sptr rx_dev, double cf, double bw, size_t
   g_rx_dev = rx_dev;
   g_rx_cf = cf;
   g_rx_bw = bw;
-  rx_fft_len = fft_len;
+  g_rx_fft_size = fft_len;
   g_rx_subcarriers_map = iq_map_vec(fft_len, -1);
   g_fft_complex = sfft_complex(new fft_complex(fft_len));
 
@@ -247,51 +305,7 @@ Hypervisor::set_rx_mapping()
   g_rx_subcarriers_map = subcarriers_map;
 }
 
-int
-Hypervisor::set_rx_mapping(vrtual_rf_source &vr, iq_map_vec &subcarriers_map)
-{
-   double vr_bw = vr.get_rx_bandwidth();
-   double vr_cf = vr.get_rx_freq();
-   double offset = (vr_cf - vr_bw/2.0) - (g_rx_cf - g_rx_bw/2.0) ;
 
-   // First VR subcarrier
-   int sc = offset / (g_rx_bw / rx_fft_len);
-   size_t fft_n = vr_bw /(g_rx_bw /rx_fft_len);
-
-
-   if (sc < 0 || sc > rx_fft_len)
-   {
-      return -1;
-   }
-
-   // TODO what this means?
-   double c_bw = fft_n*g_rx_bw/rx_fft_len;
-   double c_cf = g_rx_cf - g_rx_bw/2 + (g_rx_bw/rx_fft_len) * (sc + (fft_n/2));
-
-   std::cout << boost::format("<hypervisor> RX Request VR BW: %1%, CF: %2% ") % vr_bw % vr_cf << std::endl;
-   std::cout << boost::format("<hypervisor> RX Actual  VR BW: %1%, CF: %2% ") % c_bw % c_cf << std::endl;
-
-   // Allocate subcarriers sequentially from sc
-   iq_map_vec the_map;
-   for (; sc < rx_fft_len; sc++)
-   {
-      //LOG_IF(subcarriers_map[sc] != -1, INFO) << "Subcarrier @" <<  sc << " already allocated";
-      if (subcarriers_map[sc] != -1)
-         return -1;
-
-      the_map.push_back(sc);
-      subcarriers_map[sc] = vr.get_id();
-
-      // break when we allocated enough subcarriers
-      if (the_map.size() == fft_n)
-         break;
-   }
-
-   vr.set_rx_fft(fft_n);
-   vr.set_rx_mapping(the_map);
-
-   return 1;
-}
 
 void
 Hypervisor::build_rx_window(iq_window *tx_window)
@@ -313,6 +327,22 @@ Hypervisor::build_rx_window(iq_window *tx_window)
   }
 
           (*it)->demap_iq_samples(g_fft_complex->get_outbuf(), get_rx_fft());
+}
+
+
+void
+virtual_rf_sink::set_tx_mapping(const iq_map_vec &iq_map)
+{
+
+  // TODO move to hypervisor
+  g_tx_map = iq_map;
+}
+
+
+void
+virtual_fr_source::set_rx_mapping(const iq_map_vec &iq_map)
+{
+  g_rx_map = iq_map;
 }
 
 } /* namespace hydra */

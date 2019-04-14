@@ -22,13 +22,16 @@
 
 namespace hydra {
 
-VirtualRadio::VirtualRadio(size_t _idx, Hypervisor *hypervisor):
+VirtualRadio::VirtualRadio(
+    size_t _idx, std::shared_ptr<Hypervisor> hypervisor):
    g_idx(_idx),
    b_receiver(false),
    b_transmitter(false),
    g_rx_udp_port(0),
    g_tx_udp_port(0)
 {
+  // Pointer to the hypervisor
+  p_hypervisor = hypervisor;
 }
 
 int
@@ -46,18 +49,19 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
   g_rx_cf = d_rx_freq;
   g_rx_bw = d_rx_bw;
 
-  g_rx_fft_size = p_hypervisor->get_rx_fft() * (d_rx_bw / p_hypervisor->get_rx_bandwidth());
+  auto [u_fft_size, d_actual_cf, d_actual_bw] = p_hypervisor->create_tx_map(
+          u_id, d_centre_freq, d_bandwidth);
+
+  g_rx_fft_size = u_fft_size;
 
   // Create a new virtual RF front-end
   rx_virtual_rf = std::make_unique<virtual_rf_source>(
-      g_tx_bw,
-      g_tx_cf,
       g_tx_fft_size);
 
   // Create new resampler
   rx_resampler = std::make_unique<resampler<iq_window, iq_sample>>(
       rx_virtual_rf->buffer(),
-      d_rx_bw,
+      d_rx_bw, // TODO should add the request BW as well
       g_rx_fft_size);
 
   /* Create ZMQ transmitter */
@@ -67,10 +71,13 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
       remote_addr,
       std::to_string(u_rx_udp));
 
+  // Attach the virtual RF front-end to the hypervisor
+  p_hypervisor->attach_rx_vrf(g_idx, rx_virtual_rf);
+
   /* Toggle receiving flag */
   b_receiver = true;
 
-  // Create reports object
+  // TODO Create RX report object
   //rx_report = std::make_unique<xvl_report>(g_idx, rx_socket->buffer());
 
   // Successful return
@@ -94,7 +101,10 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
   g_tx_bw = d_tx_bw;
   g_tx_cf = d_tx_cf;
 
-  g_tx_fft_size = p_hypervisor->get_tx_fft() * (d_tx_bw / p_hypervisor->get_tx_bandwidth());
+  auto [u_fft_size, d_actual_cf, d_actual_bw] = p_hypervisor->create_tx_map(
+          u_id, d_centre_freq, d_bandwidth);
+
+  g_tx_fft_size = u_fft_size;
 
   // Create ZMQ receiver
   tx_socket = zmq_source::make(
@@ -106,27 +116,106 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
   // Create new resampler
   tx_resampler = std::make_unique<resampler<iq_sample, iq_window>>(
       tx_socket->buffer(),
-      d_tx_bw,
+      d_tx_bw, // TODO should add the request BW as well
       g_tx_fft_size);
 
 
   // Create a new virtual RF front-end
-  tx_virtual_rf = std::make_unique<virtual_rf_sink>(
+  tx_virtual_rf = std::make_shared<virtual_rf_sink>(
       tx_resampler->buffer(),
-      g_tx_bw,
-      g_tx_cf,
       g_tx_fft_size);
+
+  // Attach the virtual RF front-end to the hypervisor
+  p_hypervisor->attach_tx_vrf(g_idx, tx_virtual_rf);
 
   // Toggle transmitting flag
   b_transmitter = true;
 
-  // TODO Create TX reports object
+  // TODO Create TX report object
   // tx_report = std::make_unique<xvl_report>(u_id, tx_socket->windows());
 
   // Successful return
   return 0;
 }
 
+int
+VirtualRadio::set_tx_centre_freq(double centre_freq)
+{
+  // If the centre frequency hasn't changed
+  if (centre_freq != g_tx_centre_freq)
+  {
+    // If the change worked
+    if(p_hypervisor->change_tx_centre_freq(g_idx, centre_freq))
+    {
+      // Update the TX centre frequency
+      g_tx_centre_freq = centre_freq;
+      // Successful return
+      return 1;
+    }
+  }
+  // Opsie
+  return 0;
+}
 
+int
+VirtualRadio::set_tx_bandwidth(double bandwidth)
+{
+  // TODO this is very tricky. All blocks should support such change
+
+  // If the bandwidth hasn't changed
+  if (bandwidth!= g_tx_bandwidth)
+  {
+    // If the change worked
+    if(p_hypervisor->change_tx_bandwidth(g_idx, bandwidth))
+    {
+      // Update the TX bandwidth
+      g_tx_bandwidth = bandwidth;
+      // Successful return
+      return 1;
+    }
+  }
+  // Opsie
+  return 0;
+}
+
+int
+VirtualRadio::set_rx_centre_freq(double centre_freq)
+{
+  // If the centre frequency hasn't changed
+  if (centre_freq != g_rx_centre_freq)
+  {
+    // If the change worked
+    if(p_hypervisor->change_rx_centre_freq(g_idx, centre_freq))
+    {
+      // Update the TX centre frequency
+      g_rx_centre_freq = centre_freq;
+      // Successful return
+      return 1;
+    }
+  }
+  // Opsie
+  return 0;
+}
+
+int
+VirtualRadio::set_rx_bandwidth(double bandwidth)
+{
+  // TODO this is very tricky. All blocks should support such change
+
+  // If the bandwidth hasn't changed
+  if (bandwidth!= g_rx_bandwidth)
+  {
+    // If the change worked
+    if(p_hypervisor->change_rx_bandwidth(g_idx, bandwidth))
+    {
+      // Update the RX bandwidth
+      g_rx_bandwidth = bandwidth;
+      // Successful return
+      return 1;
+    }
+  }
+  // Opsie
+  return 0;
+}
 
 } /* namespace hydra */

@@ -63,25 +63,19 @@ HydraCore::request_rx_resources(unsigned int u_id,
   }
 
   // Try to get this virtual readio
-  VirtualRadio virtual_radio= get_virtual_radio(u_id);
+  VirtualRadio* virtual_radio = get_virtual_radio(u_id);
 
   // If this is a new Virtual Radio
   if (virtual_radio == nullptr)
   {
     // Try to reserve the resource chunks
-    if(p_resource_manager->reserve_rx_resources(u_id, d_centre_freq, d_bandwidth))
-    {
-      // Ops, it failed
-      return 0;
-    }
-    // Great, we can allocate it
-    else
+    if(not p_resource_manager->reserve_rx_resources(u_id, d_centre_freq, d_bandwidth))
     {
       // Create RX UDP port
       static size_t u_udp_port = 33000;
 
       // Creare a new virtual radio
-      virtual_radio = std::make_shared<VirtualRadio>(u_id);
+      virtual_radio = new VirtualRadio(u_id, p_hypervisor);
       // Create the RX chain
       virtual_radio->set_rx_chain(u_udp_port, d_centre_freq, d_bandwidth, server_addr, remote_addr);
       // Add it to the list
@@ -91,33 +85,30 @@ HydraCore::request_rx_resources(unsigned int u_id,
       std::cout << "<core> RX Resources allocated successfully." << std::endl;
       return u_udp_port++;
     }
-    // There is already a virtual radio
-    else if(vr->get_rx_enabled())
+  } // New VR
+  // There is already a virtual radio
+  else if(vr->get_rx_enabled())
+  {
+    // Request RX resources from an existing VR
+    if (p_resource_manager->check_rx_free(d_centre_freq, d_bandwidth, u_id))
     {
-      // Request RX resources from an existing VR
-      if (p_resource_manager->check_rx_free(d_centre_freq, d_bandwidth, u_id))
-      {
-        // Free the RX resources
-        p_resource_manager->free_rx_resources(u_id);
-        // Allocate new RX resources
-        p_resource_manager->reserve_rx_resources(u_id, d_centre_freq, d_bandwidth);
+      // Free the RX resources
+      p_resource_manager->free_rx_resources(u_id);
+      // Allocate new RX resources
+      p_resource_manager->reserve_rx_resources(u_id, d_centre_freq, d_bandwidth);
 
-        // Set the RX centre frequency and bandwidth
-        virtual_radio->set_rx_freq(d_centre_freq);
-        virtual_radio->set_rx_bandwidth(d_bandwidth);
+      // Set the RX centre frequency and bandwidth
+      virtual_radio->set_rx_freq(d_centre_freq);
+      virtual_radio->set_rx_bandwidth(d_bandwidth);
 
-        // Return sucessfull reallocation
-        return virtual_radio->g_rx_udp_port;
-
-      }
-      // Failed reallocating resources
-      else
-      {
-        return 0;
-      }
+      // If able to create all of it, return the port number
+      std::cout << "<core> RX Resources allocated successfully." << std::endl;
+      return virtual_radio->g_rx_udp_port;
     }
+  } // Existing VR
 
-  }
+  // Otherwise, the allocation failed
+  return 0;
 }
 
 int
@@ -139,25 +130,19 @@ HydraCore::request_tx_resources(unsigned int u_id,
   }
 
   // Try to get this virtual readio
-  VirtualRadio virtual_radio = get_virtual_radio(u_id);
+  VirtualRadio* virtual_radio = get_virtual_radio(u_id);
 
   // If this is a new Virtual Radio
   if (virtual_radio == nullptr)
   {
     // Try to reserve the resource chunks
-    if(p_resource_manager->reserve_tx_resources(u_id, d_centre_freq, d_bandwidth))
-    {
-      // Ops, it failed
-      return 0;
-    }
-    // Great, we can allocate it
-    else
+    if(not p_resource_manager->reserve_tx_resources(u_id, d_centre_freq, d_bandwidth))
     {
       // Create TX UDP port
       static size_t u_udp_port = 33500;
 
       // Creare a new virtual radio
-      virtual_radio = std::make_shared<VirtualRadio>(u_id);
+      virtual_radio = new VirtualRadio(u_id, p_hypervisor);
       // Create the RX chain
       virtual_radio->set_tx_chain(u_udp_port, d_centre_freq, d_bandwidth, server_addr, remote_addr);
       // Add it to the list
@@ -167,37 +152,29 @@ HydraCore::request_tx_resources(unsigned int u_id,
       std::cout << "<core> TX Resources allocated successfully." << std::endl;
       return u_udp_port++;
     }
-    // There is already a virtual radio
-    else if(virtual_radio->get_tx_enabled())
+  } // New VR
+  // There is already a virtual radio
+  else if(virtual_radio->get_tx_enabled())
+  {
+    // Request TX resources from an existing VR
+    if (p_resource_manager->check_tx_free(d_centre_freq, d_bandwidth, u_id))
     {
-      // Request TX resources from an existing VR
-      if (p_resource_manager->check_tx_free(d_centre_freq, d_bandwidth, u_id))
-      {
-        // Free the TX resources
-        p_resource_manager->free_tx_resources(u_id);
-        // Allocate new TX resources
-        p_resource_manager->reserve_tx_resources(u_id, d_centre_freq, d_bandwidth);
+      // Free the TX resources
+      p_resource_manager->free_tx_resources(u_id);
+      // Allocate new TX resources
+      p_resource_manager->reserve_tx_resources(u_id, d_centre_freq, d_bandwidth);
 
-        // Set the TX centre frequency and bandwidth
-        virtual_radio->set_tx_freq(d_centre_freq);
-        virtual_radio->set_tx_bandwidth(d_bandwidth);
+      // Set the TX centre frequency and bandwidth
+      virtual_radio->set_tx_freq(d_centre_freq);
+      virtual_radio->set_tx_bandwidth(d_bandwidth);
 
-        // Return sucessfull reallocation
-        return virtual_radio->g_tx_udp_port;
-      }
-      // Failed reallocating resources
-      else
-      {
-        return 0;
-      }
+      // Return sucessfull reallocation
+      return virtual_radio->g_tx_udp_port;
     }
+  } // Existing VR
 
-  }
-}
-
-  // If able to create all of it, return the port number
-  std::cout << "<core> TX Resources allocated successfully." << std::endl;
-  return u_udp_port++;
+  // Otherwise, the allocation failed
+  return 0;
 }
 
 // Query the virtual radios (and add their UDP port)
@@ -283,6 +260,9 @@ HydraCore::free_resources(size_t radio_id)
 VirtualRadioPtr
 HydrCore::get_vradio(size_t id)
 {
+  // Lock asses to the virtual radio vector
+  std::lock_guard<std::mutex> core_lock(core_mutex);
+
   // Assgign it to NULL by default
   VirtualRadioPtr vr = nullptr;
 
@@ -305,13 +285,14 @@ HydrCore::get_vradio(size_t id)
 bool
 Hypervisor::detach_virtual_radio(size_t radio_id)
 {
-  std::lock_guard<std::mutex> _l(vradios_mtx);
+  // Lock asses to the virtual radio vector
+  std::lock_guard<std::mutex> core_lock(core_mutex);
 
   auto new_end = std::remove_if(g_vradios.begin(), g_vradios.end(),
                                 [radio_id](const auto & vr) {
                                   return vr->get_id() == radio_id; });
 
-  g_vradios.erase(new_end, g_vradios.end());
+  g_virtual_radios.erase(new_end, g_vradios.end());
   return true;
 }
 

@@ -31,6 +31,7 @@
 #include <mutex>
 #include <vector>
 #include <thread>
+#include <tuple>
 
 namespace hydra {
 
@@ -71,6 +72,7 @@ class Hypervisor
   void set_tx_mapping();
   int set_tx_mapping(virtual_rf_sink &vr, iq_map_vec &subcarriers_map);
 
+  std::tuple<size_t, iq_map_vec, double, double> create_tx_map(size_t u_vr_id, double d_vr_tx_cf, double d_vr_tx_bw, VirtualRFSinkPtr vsink=nullptr);
   void tx_run();
 
   // RX related methods
@@ -81,8 +83,9 @@ class Hypervisor
   void set_rx_bandwidth(double bw){ g_rx_bw = bw; }
   void set_rx_central_frequency(double cf){ g_rx_cf = cf; }
 
+  std::tuple<size_t, iq_map_vec, double, double> create_rx_map(size_t u_vr_id, double d_vr_rx_cf, double d_vr_rx_bw, VirtualRFSourcePtr vsource=nullptr);
+
   void set_rx_mapping();
-  int set_rx_mapping(virtual_rf_source &vr, iq_map_vec &subcarriers_map);
 
   void rx_run();
 

@@ -12,33 +12,31 @@ namespace hydra
 class virtual_rf
 {
   protected:
-    size_t g_fft_size; // Subcarriers used by this VRadio
-    double g_centre_freq;      // Central frequency
-    double g_bandwidth;      // Bandwidth
-
-    iq_map_vec g_iq_map;
-
-    // pointer to this VR hypervisor
-    Hypervisor *p_hypervisor; // temporary
+    // FFT size of the virtual RF front-end
+    size_t g_fft_size;
+    // FFT map of the virtual RF front-end
+    iq_map_vec g_fft_map;
+    // FFT object of the virtual RF front-end
+    sfft_complex g_fft_complex;
 
   public:
-
-  virtual void set_fft_size(unsigned int size) = 0;
-  virtual void set_cenfre_freq(double bw) = 0;
-
-  virtual void set_bandwidth(double bw) = 0;
+    // Update the virtual RF front-end's FFT size
+    void set_fft_size(size_t new_size)
+    {
+      // Uptete the FFT size
+      g_fft_size = new_size;
+    };
+    void set_fft_map(const iq_map_vec &iq_map)
+    {
+      // Update the FFT mapping
+      g_fft_map = iq_map;
+    };
 
 };
 
 
 class virtual_rf_sink : public virtual_rf
 {
-
-  private:
-
-    iq_map_vec g_tx_map;
-    sfft_complex g_fft_complex;
-
   public:
     virtual_rf_sink();
 
@@ -46,32 +44,18 @@ class virtual_rf_sink : public virtual_rf
 
     virtual_rf_sink(
       std::shared_ptr<hydra_buffer<iq_window>> input_buffer,
-      double d_bandwidth,
-      double d_centre_freq,
-      unsigned int u_fft_size);
+      unsigned int u_fft_size,
+      const iq_map_vec &iq_map);
 
-    void set_fft_size(unsigned int size);
-    void set_cenfre_freq(double bw);
-    void set_bandwidth(double bw);
-
-    int set_tx_freq(double cf);
-    void set_tx_bandwidth(double bw);
-    void set_tx_mapping(const iq_map_vec &iq_map);
-
-    size_t const set_tx_fft(size_t n) {return g_fft_size = n;}
-
-    bool map_tx_samples(iq_sample *samples_buf); // called by the hypervisor
+    // Map window of time domain samples to frequency domain
+    bool map_to_freq(iq_sample *samples_buf);
 
 };
 
 class virtual_rf_source: public virtual_rf
 {
-
   private:
-
-    iq_map_vec g_tx_map;
-    sfft_complex g_fft_complex;
-
+    // Pointer to the output buffer
     std::shared_ptr<hydra_buffer<iq_window>> p_output_buffer;
 
   public:
@@ -80,9 +64,8 @@ class virtual_rf_source: public virtual_rf
     ~virtual_rf_source();
 
     virtual_rf_source(
-      double d_bandwidth,
-      double d_centre_freq,
-      unsigned int u_fft_size);
+      unsigned int u_fft_size,
+      const iq_map_vec &iq_map);
 
     // Return pointer to the internal buffer
     std::shared_ptr<hydra_buffer<iq_window>> buffer()
@@ -90,22 +73,9 @@ class virtual_rf_source: public virtual_rf
       return p_output_buffer;
     };
 
-    void set_fft_size(unsigned int size);
-    void set_cenfre_freq(double bw);
-    void set_bandwidth(double bw);
-
-    int set_tx_freq(double cf);
-    void set_tx_bandwidth(double bw);
-    void set_tx_mapping(const iq_map_vec &iq_map);
-
-    size_t const set_tx_fft(size_t n) {return g_fft_size = n;}
-
-    bool map_tx_samples(iq_sample *samples_buf); // called by the hypervisor
-
+    // Map window of frequency domain samples to time domain
+    bool map_to_time(iq_sample* input_buffer);
 };
-
-
-
 
 } // Namespace
 

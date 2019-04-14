@@ -8,130 +8,84 @@ virtual_rf::virtual_rf()
 {
 };
 
-int
-virtual_rf::set_freq(double cf)
-{
-  if (cf == g_centre_freq) return 0;
-
-   double old_cf = g_centre_freq;
-   g_centre_freq = cf;
-
-   int err = p_hypervisor->notify(*this, Hypervisor::SET_TX_MAP);
-   if (err < 0)
-      g_centre_freq = old_cf;
-
-   return err;
-}
-
-void
-virtual_rf::set_bandwidth(double bw)
-{
-  if (bw == g_bandwidth) return;
-
-
-   double old_bw = g_bandwidth;
-   g_bandwidth = bw;
-
-   int err = p_hypervisor->notify(*this, Hypervisor::SET_TX_MAP);
-   if (err < 0)
-      g_bandwidth = old_bw;
-}
 
 
 virtual_rf_sink::virtual_rf_sink(
     std::shared_ptr<hydra_buffer<iq_window>> input_buffer,
-    double d_bandwidth,
-    double d_centre_freq,
-    unsigned int u_fft_size)
+    unsigned int u_fft_size,
+    const iq_map_vec &iq_map)
 {
   // Number of IQ samples per FFT window
   g_fft_size = u_fft_size;
-  // Front-end BW
-  g_bandwidth = d_bandwidth;
-  // Front-end CF
-  g_centre_freq = d_centre_freq;
+  // The FFT mapping
+  g_fft_map = iq_map;
 
   // The input buffer
   p_input_buffer = input_buffer;
 
-  // create fft object
+  // Create FFT object
   g_fft_complex  = sfft_complex(new fft_complex(g_fft_size));
 }
 
-
 void
-virtual_rf_sink::set_tx_mapping(const iq_map_vec &iq_map)
+virtual_rf_sink::map_to_freq(iq_sample* output_window)
 {
-
-  // TODO move to hypervisor
-  g_tx_map = iq_map;
-}
-
-bool
-virtual_rf_sink::map_tx_samples(iq_sample *samples_buf)
-{
-
-  // TODO Run method
-
   // Try to get a window from the resampler
-  auto buf  = p_input_buffer->read(1);
+  iq_window time_window = p_input_buffer->read_one();
 
   // Return false if the window is empty
-  if (buf.empty()){return false;}
+  if (time_window.empty()){return false;}
 
-  // Copy samples in TIME domain to FFT buffer, execute FFT
-  g_fft_complex->set_data(&buf[0][0], g_tx_fft_size);
+  // Copy samples in time domain to FFT buffer, execute FFT
+  g_fft_complex->set_data(&time_window[0], g_fft_size);
+  // Execute the FFT
   g_fft_complex->execute();
-  iq_sample *outbuf = g_fft_complex->get_outbuf();
 
-  // map samples in FREQ domain to samples_buff
-  // perfors fft shift
-  std::copy(g_tx_map.begin(), g_tx_map.end(), samples_buf);
+  // Get the frequency domain window
+  iq_sample* freq_window = g_fft_complex->get_outbuf();
 
+  // Map samples in frequency domain to the output buffer, with an FFT shift
+  size_t index = 0;
+  for (auto it = g_fft_map.begin(); it != g_fft_map.end(); ++it, ++index)
+  {
+    // Very ugly, but this seems to be the only way to make the FFT shift
+    output_window[*it]  = freq_window[index];
+  }
+
+  // Life is great, return true
   return true;
 }
 
 virtual_rf_source::virtual_rf_source(
-    double d_bandwidth,
-    double d_centre_freq,
-    unsigned int u_fft_size)
+    unsigned int u_fft_size,
+    const iq_map_vec &iq_map)
 {
   // Number of IQ samples per FFT window
   g_fft_size = u_fft_size;
-  // Front-end BW
-  g_bandwidth = d_bandwidth;
-  // Front-end CF
-  g_centre_freq = d_centre_freq;
+  // The IFFT mapping
+  g_fft_map = iq_map;
 
   // The output buffer
   p_output_buffer= std::make_shared<hydra_buffer<iq_window>>(1000);
 
-  // create fft object
-  g_ifft_complex  = sfft_complex(new fft_complex(g_rx_fft_size, false));
-}
-
-
-void
-virtual_fr_source::set_rx_mapping(const iq_map_vec &iq_map)
-{
-  g_rx_map = iq_map;
+  // create IFFT object
+  g_fft_complex  = sfft_complex(new fft_complex(g_fft_size, false));
 }
 
 void
-virtual_rf_source::demap_iq_samples(const iq_sample *samples_buf, size_t len)
+virtual_rf_source::map_to_time(const iq_sample *input_buffer)
 {
-  // If the receiver chain was not defined
-  if (not b_receiver){ return;}
+  // Map samples in input buffer to the time domain, with an IFFT shift
+  for (size_t index = 0; index < g_fft_size; ++index)
+  {
+    // Very ugly, but this seems to be the only way to make the IFFT shift
+    g_fft_complex->get_inbuf()[index] = input_buffer[g_fft_map[index]];
+  }
+  // Perform the I<Up>FFT operation
+  g_fft_complex->execute();
 
-  /* Copy the samples used by this radio */
-  for (size_t idx = 0; idx < g_rx_fft_size; ++idx)
-    g_ifft_complex->get_inbuf()[idx] = samples_buf[g_rx_map[idx]];
-
-  // Perform the FFT operation
-  g_ifft_complex->execute();
-
-  /* Append new samples */
-  rx_resampler->buffer()->write(g_ifft_complex->get_outbuf(), g_rx_fft_size);
+  // Write the time domain samples in the outputbuffer
+  p_output_buffer->write(g_fft_complex->get_outbuf());
 }
 
 
