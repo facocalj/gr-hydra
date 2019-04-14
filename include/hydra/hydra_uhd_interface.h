@@ -25,7 +25,7 @@ class abstract_device
  public:
  abstract_device(){}
 
-  virtual void send(const iq_window &buf, size_t len) { std::cerr << __PRETTY_FUNCTION__ << " not implemented" << std::endl;};
+  virtual void send(const iq_window* buf) { std::cerr << __PRETTY_FUNCTION__ << " not implemented" << std::endl;};
   virtual size_t receive(iq_window &buf, size_t len) { std::cerr << __PRETTY_FUNCTION__ << " not implemented" << std::endl;};
 
   virtual void set_tx_config(double freq, double rate, double gain){ g_tx_freq = freq; g_tx_rate = rate; g_tx_gain = gain;};
@@ -49,7 +49,7 @@ public:
   device_uhd(std::string device_args = "");
   ~device_uhd();
 
-  void send(const iq_window &buf, size_t len);
+  void send(const iq_window* buf);
   size_t receive(iq_window &buf, size_t len);
 
   void set_tx_config(double freq, double rate, double gain);
@@ -70,7 +70,7 @@ class device_image_gen: public abstract_device
 {
 public:
    device_image_gen(std::string device_args = "");
-   void send(const iq_window &buf, size_t len);
+   void send(const iq_window* buf);
    size_t receive(iq_window &buf, size_t len);
 
 private:
@@ -83,7 +83,7 @@ class device_loopback: public abstract_device
 {
 public:
    device_loopback(std::string device_args = "");
-   void send(const iq_window &buf, size_t len);
+   void send(const iq_window* buf);
    size_t receive(iq_window &buf, size_t len);
 
 private:
@@ -95,7 +95,7 @@ class device_network: public abstract_device
 {
 public:
    device_network(std::string host_add, std::string remote_addr);
-   void send(const iq_window &buf, size_t len);
+   void send(const iq_window* buf);
    size_t receive(iq_window &buf, size_t len);
 
 private:

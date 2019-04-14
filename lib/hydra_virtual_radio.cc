@@ -41,16 +41,16 @@ VirtualRadio::set_rx_chain(unsigned int u_rx_udp,
                            const std::string &server_addr,
                            const std::string &remote_addr)
 {
-  // If already receiving
-  if (b_receiver) { return 1; }
+  // If already receiving, return error
+  if (b_receiver){return 1;}
 
   // Set the VR RX UDP port
   g_rx_udp_port = u_rx_udp;
   g_rx_cf = d_rx_freq;
   g_rx_bw = d_rx_bw;
 
-  auto [u_fft_size, d_actual_cf, d_actual_bw] = p_hypervisor->create_tx_map(
-          u_id, d_centre_freq, d_bandwidth);
+  auto [u_fft_size, d_actual_cf, d_actual_bw] = p_hypervisor->calculate_tx_params(
+          g_idx, d_rx_freq, d_rx_bw);
 
   g_rx_fft_size = u_fft_size;
 
@@ -91,10 +91,8 @@ VirtualRadio::set_tx_chain(unsigned int u_tx_udp,
                            const std::string &server_addr,
                            const std::string &remote_addr)
 {
-  // If already transmitting
-  if (b_transmitter)
-    // Return error
-    return 1;
+  // If already transmitting, return an error
+  if (b_transmitter){return 1;}
 
   // Set the VR TX UDP port
   g_tx_udp_port = u_tx_udp;

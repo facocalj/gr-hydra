@@ -37,7 +37,7 @@ private:
 
   std::mutex g_mutex;
 
-  VirtualRadioPtr HydrCore::get_virtual_radio(size_t id);
+  VirtualRadioPtr get_virtual_radio(size_t id);
 
 
 public:

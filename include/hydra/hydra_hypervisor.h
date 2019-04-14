@@ -40,9 +40,6 @@ class Hypervisor
  public:
 
   Hypervisor();
-  Hypervisor(size_t _fft_m_len,
-             double central_frequency,
-             double bandwidth);
 
   enum Notify {
      SET_NONE = 0x0,
@@ -64,35 +61,40 @@ class Hypervisor
   // TX related methods
   double const get_tx_central_frequency() { return g_tx_cf; }
   double const get_tx_bandwidth() { return g_tx_bw; }
-  size_t const get_tx_fft() { return tx_fft_len; }
+  size_t const get_tx_fft() { return g_tx_fft_size; }
+
   void set_tx_resources(uhd_hydra_sptr tx_dev, double cf, double bw, size_t fft_len);
   void set_tx_bandwidth(double bw){ g_tx_bw = bw; }
   void set_tx_central_frequency(double cf){ g_tx_cf = cf; }
 
   void set_tx_mapping();
-  int set_tx_mapping(virtual_rf_sink &vr, iq_map_vec &subcarriers_map);
 
-  std::tuple<size_t, iq_map_vec, double, double> create_tx_map(size_t u_vr_id, double d_vr_tx_cf, double d_vr_tx_bw, VirtualRFSinkPtr vsink=nullptr);
+  std::tuple<size_t, double, double> create_tx_map(size_t u_vr_id, double d_vr_tx_cf, double d_vr_tx_bw, VirtualRFSinkPtr vsink=nullptr);
+  int attach_tx_vrf(int u_vr_id, VirtualRFSinkPtr vsink);
+  void build_tx_window(iq_window *tx_window);
+
   void tx_run();
 
   // RX related methods
   double const get_rx_central_frequency() { return g_rx_cf; }
   double const get_rx_bandwidth() { return g_rx_bw; }
-  size_t const get_rx_fft() { return rx_fft_len; }
+  size_t const get_rx_fft() { return g_rx_fft_size; }
+
   void set_rx_resources(uhd_hydra_sptr rx_dev, double cf, double bw, size_t fft_len);
   void set_rx_bandwidth(double bw){ g_rx_bw = bw; }
   void set_rx_central_frequency(double cf){ g_rx_cf = cf; }
 
-  std::tuple<size_t, iq_map_vec, double, double> create_rx_map(size_t u_vr_id, double d_vr_rx_cf, double d_vr_rx_bw, VirtualRFSourcePtr vsource=nullptr);
+  std::tuple<size_t, double, double> create_rx_map(size_t u_vr_id, double d_vr_rx_cf, double d_vr_rx_bw, VirtualRFSourcePtr vsource=nullptr);
+  int attach_rx_vrf(int u_vr_id, VirtualRFSourcePtr vsource);
+  void build_rx_window(iq_window *rx_window);
 
   void set_rx_mapping();
 
   void rx_run();
 
-
 private:
   // All TX structures
-  size_t tx_fft_len; // FFT M length
+  size_t g_tx_fft_size; // FFT M length
   double g_tx_cf; // Hypervisor central frequency
   double g_tx_bw; // Hypervisor bandwidth
   sfft_complex g_ifft_complex;
@@ -109,7 +111,7 @@ private:
   };
 
   // All RX structures
-  size_t rx_fft_len; // FFT M length
+  size_t g_rx_fft_size; // FFT M length
   double g_rx_cf; // Hypervisor central frequency
   double g_rx_bw; // Hypervisor bandwidth
   sfft_complex g_fft_complex;

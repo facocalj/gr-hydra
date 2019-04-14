@@ -6,7 +6,7 @@ namespace hydra {
 HydraMain::HydraMain(std::string server_addr,
                      unsigned int u_monitor_port)
 {
-   /* Set the control port */
+   // Set the control address
    s_server_addr = server_addr;
 
    // Initialise the stats reporter

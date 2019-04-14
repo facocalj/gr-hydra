@@ -2,13 +2,9 @@
 
 namespace hydra {
 
-
-
 virtual_rf::virtual_rf()
 {
 };
-
-
 
 virtual_rf_sink::virtual_rf_sink(
     std::shared_ptr<hydra_buffer<iq_window>> input_buffer,

@@ -48,6 +48,9 @@ namespace hydra {
   class abstract_device;
   class Hypervisor;
   class VirtualRadio;
+  class virtual_rf_sink;
+  class virtual_rf_source;
+
 
   // Poiner definitions
   typedef std::shared_ptr<abstract_device> uhd_hydra_sptr;
@@ -57,6 +60,9 @@ namespace hydra {
   typedef std::queue<samples_vec> samples_vec_vec;
 
   typedef std::vector<int> iq_map_vec;
+
+  typedef std::shared_ptr<virtual_rf_sink> VirtualRFSinkPtr;
+  typedef std::shared_ptr<virtual_rf_source> VirtualRFSourcePtr;
 
   typedef std::shared_ptr<Hypervisor> HypervisorPtr;
   typedef std::shared_ptr<VirtualRadio> VirtualRadioPtr;

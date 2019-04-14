@@ -9,6 +9,7 @@ HydraCore::HydraCore()
 {
    // Initialise the resource manager
    p_resource_manager = std::make_unique<xvl_resource_manager>();
+   // Initialize the hypervisor
    p_hypervisor = std::make_unique<Hypervisor>();
 }
 
@@ -258,7 +259,7 @@ HydraCore::free_resources(size_t radio_id)
 }
 
 VirtualRadioPtr
-HydrCore::get_vradio(size_t id)
+HydraCore::get_vradio(size_t id)
 {
   // Lock asses to the virtual radio vector
   std::lock_guard<std::mutex> core_lock(core_mutex);
