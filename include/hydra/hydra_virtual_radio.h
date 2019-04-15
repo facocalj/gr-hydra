@@ -43,6 +43,28 @@ class VirtualRadio
      */
     VirtualRadio(size_t _idx, Hypervisor *hypervisor);
 
+    void stop()
+    {
+      // If Transmitting
+      if (b_transmitter)
+      {
+        // Stop resampler and socket loops
+        tx_resampler->stop();
+        tx_socket->stop();
+
+        std::cout << "<VR #" << g_idx << "> Stopped TX chain." << std::endl;
+      }
+      // If receiving
+      if (b_receiver)
+      {
+        // Stop resampler and socket loops
+       rx_resampler->stop();
+       rx_socket->stop();
+
+       std::cout << "<VR #" << g_idx << "> Stopped RX chain." << std::endl;
+      }
+    };
+
     int set_rx_chain(unsigned int u_rx_udp,
                     double d_rx_centre_freq,
                     double d_rx_bw,

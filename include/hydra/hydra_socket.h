@@ -32,7 +32,7 @@ class zmq_source
                const unsigned int& buf_size);
 
     /* DTOR  */
-    ~zmq_source();
+    void stop();
 
     static std::unique_ptr<zmq_source> make(const std::string &server_addr,
                                             const std::string &remote_addr,
@@ -88,7 +88,7 @@ class zmq_sink
              const std::string& port);
 
     /* DTOR */
-    ~zmq_sink();
+    void stop();
 
     static std::unique_ptr<zmq_sink> make(std::shared_ptr<hydra_buffer<iq_sample>> input_buffer,
                                           const std::string& server_addr,

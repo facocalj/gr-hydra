@@ -124,11 +124,11 @@ main(int argc, const char *argv[])
      d_tx_samp_rate,
      u_tx_fft_size);
 
-   // hydra_instance->set_rx_config(
-     // backend,
-     // d_rx_centre_freq,
-     // d_rx_samp_rate,
-     // u_rx_fft_size);
+   hydra_instance->set_rx_config(
+     backend,
+     d_rx_centre_freq,
+     d_rx_samp_rate,
+     u_rx_fft_size);
 
    /* Run server */
    hydra_instance->run();

@@ -19,8 +19,8 @@ zmq_source::zmq_source(const std::string& server_addr,
   g_rx_thread = std::make_unique<std::thread>(&zmq_source::run, this);
 };
 
-// Destructor
-zmq_source::~zmq_source()
+void
+zmq_source::stop()
 {
   // Toggle thread stop condition
   g_th_run = false;
@@ -33,7 +33,7 @@ zmq_source::run()
 {
   // Construct the URI
   std::string addr = "tcp://" + s_host + ":" + s_port;
-  std::cout << "<zmq_source> Remote client address: " << addr << std::endl;
+  std::cout << "<zmq/source> Remote client address: " << addr << std::endl;
 
   // Connect to remote client
   socket.connect(addr.c_str());
@@ -51,7 +51,7 @@ zmq_source::run()
       iq_sample *tmp = static_cast<iq_sample *>(message.data());
 
       if (message.size() % sizeof(iq_sample) != 0)
-        std::cout << "Error: message not complete" << std::endl;
+        std::cout << "<zmq/source> Incomplete message." << std::endl;
 
       // Write the amount of IQ samples to the buffer
       p_output_buffer->write(tmp, tmp + (message.size()/sizeof(iq_sample)));
@@ -68,10 +68,10 @@ zmq_source::run()
 
   // Close the ZMQ primitives
   socket.close();
-  context.close();
+  // context.close();
 
   // Output debug information
-  std::cout << "Stopping <zmq_source>" << std::endl;
+  std::cout << "<zmq/source> Stopped socket." << std::endl;
 };
 
 
@@ -89,8 +89,8 @@ zmq_sink::zmq_sink(std::shared_ptr<hydra_buffer<iq_sample>> input_buffer,
   g_rx_thread = std::make_unique<std::thread>(&zmq_sink::run, this);
 };
 
-// Destructor
-zmq_sink::~zmq_sink()
+void
+zmq_sink::stop()
 {
   // Toggle thread stop condition
   g_th_run = false;
@@ -114,6 +114,7 @@ zmq_sink::run()
   // Temp container for incoming IQ samples
   std::vector<iq_sample> tmp;
 
+  int rc;
   // Event loop
   while (g_th_run)
   {
@@ -138,9 +139,9 @@ zmq_sink::run()
       if (g_th_run)
       {
         // Send message to client
-        socket.send(message);
+        rc = socket.send(message);
       }
-    }
+    } // If buffer
     // There's nothing to trasmit
     else
     {
@@ -151,10 +152,10 @@ zmq_sink::run()
 
   // Close the ZMQ primitives
   socket.close();
-  context.close();
+  // context.close();
 
   // Output debug information
-  std::cout << "Stopping <zmq_sink>" << std::endl;
+  std::cout << "<zmq/sink> Stopped socket." << std::endl;
 }
 
 tcp_sink::tcp_sink(

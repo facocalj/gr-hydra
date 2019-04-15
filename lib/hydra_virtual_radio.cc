@@ -169,19 +169,23 @@ VirtualRadio::map_tx_samples(iq_sample *samples_buf)
   if (not b_transmitter){return false;}
 
   // Try to get a window from the resampler
-  auto buf  = tx_resampler->buffer()->read_one();
+  iq_window buf  = tx_resampler->buffer()->read_one();
 
   // Return false if the window is empty
   if (buf.empty()){return false;}
 
   // Copy samples in TIME domain to FFT buffer, execute FFT
-  g_fft_complex->set_data(buf.data(), g_tx_fft_size);
+  g_fft_complex->set_data(&buf.front(), g_tx_fft_size);
   g_fft_complex->execute();
   iq_sample *outbuf = g_fft_complex->get_outbuf();
 
   // map samples in FREQ domain to samples_buff
   // perfors fft shift
-  std::copy(g_tx_map.begin(), g_tx_map.end(), samples_buf);
+  int idx = 0;
+  for (auto it = g_tx_map.begin(); it != g_tx_map.end(); ++it, ++idx)
+  {
+    samples_buf[*it] = outbuf[idx];
+  }
 
   return true;
 }

@@ -228,13 +228,17 @@ HydraCore::query_resources()
 // Deletes a given virtual radio
 int
 HydraCore::free_resources(size_t radio_id)
-{
-  std::cout << "CORE: freeing resources for radio: " << radio_id << std::endl;
+{
+  std::cout << "<core> Freeing resources for radio: " << radio_id << std::endl;
   p_resource_manager->free_rx_resources(radio_id);
   p_resource_manager->free_tx_resources(radio_id);
+  auto vr = p_hypervisor->get_vradio(radio_id);
+  // Stop the VR chains if the VR exists
+  if (vr != nullptr){vr->stop();}
+
   p_hypervisor->detach_virtual_radio(radio_id);
 
-  std::cout << "CORE: DONE freeing resources for radio: " << radio_id << std::endl;
+  std::cout << "<core> Freed resources for radio: " << radio_id << std::endl;
   return 1;
 }
 
