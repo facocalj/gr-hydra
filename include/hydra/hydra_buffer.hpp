@@ -21,6 +21,10 @@ class hydra_buffer
     container_type<data_type, std::allocator<data_type>> buffer;
     // Output mutex
     std::mutex buffer_mutex;
+    // Temporary element container
+    data_type temp_element;
+    // Temporary element vector container
+    std::vector<data_type> temp_elements;
 
   public:
     // Default constructor
@@ -30,7 +34,7 @@ class hydra_buffer
     hydra_buffer(unsigned int size);
 
     // Return the current size of the buffer
-    unsigned int size()
+    const unsigned int size()
     {
       // Lock access to the inner buffer structure
       std::lock_guard<std::mutex> lock(buffer_mutex);
@@ -39,27 +43,27 @@ class hydra_buffer
     };
 
     // Return the capacity of the buffer
-    unsigned int capacity(){ return buffer.capacity();};
+    const unsigned int capacity(){return buffer.capacity();};
 
     // Read a number of elements
-    std::vector<data_type> read(unsigned int num_elements = 1);
+    std::vector<data_type> read(const unsigned int &num_elements = 1);
 
     // Read a single elements
     data_type read_one();
 
     // Write a number of the same element in the buffer
-    void write(data_type element, unsigned int num_elements = 1);
+    void write(const data_type &element, const unsigned int &num_elements = 1);
 
     // Write a number of elements to the buffer
     template <typename iterator>
-    void write(iterator begin_it, unsigned int num_elements = 1);
+    void write(iterator begin_it, const unsigned int &num_elements = 1);
 
     // Write a range of elements to the buffer
     template <typename iterator>
     void write(iterator begin_it, iterator end_it);
 
     // Access operator
-    data_type operator[](unsigned int position);
+    data_type operator[](const unsigned int &position);
 };
 
 
@@ -85,12 +89,12 @@ hydra_buffer<data_type, container_type>::read_one()
   if (buffer.size())
   {
     // Copy the first element
-    data_type element = buffer.front();
+    temp_element = buffer.front();
     // Remove the first element from the buffer
     buffer.pop_front();
 
     // Return the element
-    return element;
+    return temp_element;
   }
   // Ops, not there yet
   else
@@ -105,7 +109,7 @@ hydra_buffer<data_type, container_type>::read_one()
 // Read a number of elements
 template <typename data_type, template<typename, typename> class container_type>
 std::vector<data_type>
-hydra_buffer<data_type, container_type>::read(unsigned int num_elements)
+hydra_buffer<data_type, container_type>::read(const unsigned int &num_elements)
 {
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);
@@ -114,15 +118,15 @@ hydra_buffer<data_type, container_type>::read(unsigned int num_elements)
   if (buffer.size() >= num_elements)
   {
     // Create an array to hold the elements
-    std::vector<data_type> elements(num_elements);
+    temp_elements.resize(num_elements);
 
     // Copy the given number of elements to the temp array
-    std::copy(buffer.begin(), buffer.begin()+num_elements, elements.begin());
+    std::copy(buffer.begin(), buffer.begin()+num_elements, temp_elements.begin());
     // Remove the given numbert of elements from the buffer
-    buffer.erase(buffer.begin(), buffer.begin()+num_elements);
+    buffer.erase_begin(num_elements);
 
     // Return the array of elements
-    return elements;
+    return temp_elements;
   }
   // Ops, not there yet
   else
@@ -136,7 +140,7 @@ hydra_buffer<data_type, container_type>::read(unsigned int num_elements)
 // Write a number of the same element in the buffe:
 template <typename data_type, template<typename, typename> class container_type>
 void
-hydra_buffer<data_type, container_type>::write(data_type element, unsigned int num_elements)
+hydra_buffer<data_type, container_type>::write(const data_type &element, const unsigned int &num_elements)
 {
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);
@@ -153,7 +157,7 @@ hydra_buffer<data_type, container_type>::write(data_type element, unsigned int n
 template <typename data_type, template<typename, typename> class container_type>
 template <typename iterator>
 void
-hydra_buffer<data_type, container_type>::write(iterator begin_it, unsigned int num_elements)
+hydra_buffer<data_type, container_type>::write(iterator begin_it, const unsigned int &num_elements)
 {
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);
@@ -186,7 +190,7 @@ hydra_buffer<data_type, container_type>::write(iterator begin_it, iterator end_i
 // Access operator
 template <typename data_type, template<typename, typename> class container_type>
 data_type
-hydra_buffer<data_type, container_type>::operator[](unsigned int position)
+hydra_buffer<data_type, container_type>::operator[](const unsigned int &position)
 {
   // Lock access to the inner buffer structure
   std::lock_guard<std::mutex> lock(buffer_mutex);

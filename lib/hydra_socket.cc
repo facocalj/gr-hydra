@@ -47,14 +47,13 @@ zmq_source::run()
     // TODO recv should be blocking, upon error-less reception, enter here
     if (message.size() > 0)
     {
-      // Cast incoming data as IQ samples
-      iq_sample *tmp = static_cast<iq_sample *>(message.data());
-
       if (message.size() % sizeof(iq_sample) != 0)
         std::cout << "<zmq/source> Incomplete message." << std::endl;
 
       // Write the amount of IQ samples to the buffer
-      p_output_buffer->write(tmp, tmp + (message.size()/sizeof(iq_sample)));
+      p_output_buffer->write(
+          static_cast<iq_sample *>(message.data()),
+          message.size()/sizeof(iq_sample));
     }
     // If not, lets wait a bit
     else
@@ -114,7 +113,6 @@ zmq_sink::run()
   // Temp container for incoming IQ samples
   std::vector<iq_sample> tmp;
 
-  int rc;
   // Event loop
   while (g_th_run)
   {
@@ -123,7 +121,6 @@ zmq_sink::run()
     {
       // If we should stop running
       if (not g_th_run){break;}
-
         // Get all the stored samples
         tmp = p_input_buffer->read(p_input_buffer->size());
         // Allocate enough memory for this message
@@ -139,7 +136,7 @@ zmq_sink::run()
       if (g_th_run)
       {
         // Send message to client
-        rc = socket.send(message);
+        socket.send(message);
       }
     } // If buffer
     // There's nothing to trasmit
