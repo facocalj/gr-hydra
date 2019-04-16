@@ -61,8 +61,7 @@ Hypervisor::attach_virtual_radio(VirtualRadioPtr vradio)
 {
   /* Check if VirtualRadio with same id is already attached */
    auto vr = get_vradio(vradio->get_id());
-   if (vr != nullptr)
-      return;
+   if (vr != nullptr){return;}
 
    std::lock_guard<std::mutex> _l(vradios_mtx);
    g_vradios.push_back(vradio);
@@ -83,13 +82,40 @@ const Hypervisor::get_vradio(size_t id)
 bool
 Hypervisor::detach_virtual_radio(size_t radio_id)
 {
+  // Get pointer to the virtual radios
+  auto vr = get_vradio(radio_id);
+
+  // Lock access to the virtual radios vector
   std::lock_guard<std::mutex> _l(vradios_mtx);
 
-  auto new_end = std::remove_if(g_vradios.begin(), g_vradios.end(),
-                                [radio_id](const auto & vr) {
-                                  return vr->get_id() == radio_id; });
+  if (vr->get_tx_enabled())
+  {
+    // Temporary copy of the subcarrier map
+    iq_map_vec subcarriers_map = g_tx_subcarriers_map;
+    // Free mapping
+    std::replace(subcarriers_map.begin(), subcarriers_map.end(),
+        static_cast<int>(radio_id), -1);
 
-  g_vradios.erase(new_end, g_vradios.end());
+    // Update the mapping
+    g_tx_subcarriers_map = subcarriers_map;
+  }
+  if (vr->get_rx_enabled())
+  {
+    // Temporary copy of the subcarrier map
+    iq_map_vec subcarriers_map = g_rx_subcarriers_map;
+    // Free mapping
+    std::replace(subcarriers_map.begin(), subcarriers_map.end(),
+        static_cast<int>(radio_id), -1);
+
+    // Update the mapping
+    g_rx_subcarriers_map = subcarriers_map;
+  }
+
+  // Erase-remove idiom
+  g_vradios.erase(
+      std::remove(g_vradios.begin(), g_vradios.end(), vr),
+      g_vradios.end());
+
   return true;
 }
 
@@ -230,14 +256,17 @@ Hypervisor::set_tx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
 size_t
 Hypervisor::get_tx_window(iq_window &optr, size_t len)
 {
-  if (g_vradios.size() == 0) return 0;
+  // If there's nothing to transmit, return 0
+  if (g_vradios.size() == 0){return 0;}
 
   {
     std::lock_guard<std::mutex> _l(vradios_mtx);
 
-    for (vradio_vec::iterator it = g_vradios.begin();
-         it != g_vradios.end();
-         ++it)
+    std::fill(g_ifft_complex->get_inbuf(),
+        g_ifft_complex->get_inbuf()+len,
+        std::complex<float>(0,0));
+
+    for (auto it = g_vradios.begin(); it != g_vradios.end(); ++it)
     {
       if ((*it)->get_tx_enabled())
         (*it)->map_tx_samples(g_ifft_complex->get_inbuf());
