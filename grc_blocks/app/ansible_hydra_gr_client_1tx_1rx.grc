@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<?grc format='1' created='3.7.11'?>
+<?grc format='1' created='3.7.10'?>
 <flow_graph>
   <timestamp>Mon Jul 23 11:24:05 2018</timestamp>
   <block>
@@ -38,7 +38,7 @@
     </param>
     <param>
       <key>generate_options</key>
-      <value>no_gui</value>
+      <value>qt_gui</value>
     </param>
     <param>
       <key>hier_block_src_path</key>
@@ -46,7 +46,7 @@
     </param>
     <param>
       <key>id</key>
-      <value>ansible_hydra_gr_client_1tx_1rx</value>
+      <value>ansible_hydra_gr_client_1tx_1rx_mul</value>
     </param>
     <param>
       <key>max_nouts</key>
@@ -93,7 +93,7 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>0</value>
+      <value>1</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -184,7 +184,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>192.168.5.241</value>
+      <value>127.0.0.1</value>
     </param>
   </block>
   <block>
@@ -656,7 +656,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>1.42e9 + 3e6</value>
+      <value>2.42e9</value>
     </param>
   </block>
   <block>
@@ -699,7 +699,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>1.42e9</value>
+      <value>2.42e9</value>
     </param>
   </block>
   <block>
@@ -710,7 +710,7 @@
     </param>
     <param>
       <key>center_frequency</key>
-      <value>freqrx + vr1offset</value>
+      <value>freqrx + vr2offset</value>
     </param>
     <param>
       <key>c_host</key>
@@ -758,7 +758,7 @@
     </param>
     <param>
       <key>samp_rate</key>
-      <value>samp_rate * 2</value>
+      <value>samp_rate</value>
     </param>
     <param>
       <key>u_id</key>
@@ -813,7 +813,7 @@
     </param>
     <param>
       <key>samp_rate</key>
-      <value>samp_rate * 2</value>
+      <value>samp_rate</value>
     </param>
     <param>
       <key>u_id</key>
@@ -832,7 +832,7 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>1</value>
+      <value>0</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -1102,7 +1102,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(328, 4)</value>
+      <value>(320, 36)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1212,7 +1212,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>700e3</value>
+      <value>300e3</value>
     </param>
   </block>
   <connection>

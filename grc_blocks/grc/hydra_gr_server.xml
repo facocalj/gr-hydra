@@ -5,10 +5,10 @@
   <import>import threading</import>
   <import>import hydra</import>
   <make>hydra.hydra_gr_server($ip)
-if $(tx_center_frequency) > 0 and $(tx_samp_rate) > 0 and $(tx_fft_size) > 0:
-   self.$(id).set_tx_config($tx_center_frequency, $tx_samp_rate, $tx_fft_size, $mode)
-if $(rx_center_frequency) > 0 and $(rx_samp_rate) > 0 and $(rx_fft_size) > 0:
-   self.$(id).set_rx_config($rx_center_frequency, $rx_samp_rate, $rx_fft_size, $mode)
+if $(tx_center_frequency) > 0 and $(tx_samp_rate) > 0 and $(tx_fft_size) > 0 and $(tx_norm_gain) >= 0 and $(tx_norm_gain) >= 0:
+   self.$(id).set_tx_config($tx_center_frequency, $tx_samp_rate, $rx_norm_gain,$tx_fft_size, $mode)
+if $(rx_center_frequency) > 0 and $(rx_samp_rate) > 0 and $(rx_fft_size) > 0 and $(rx_norm_gain) >= 0 and $(rx_norm_gain) >= 0:
+   self.$(id).set_rx_config($rx_center_frequency, $rx_samp_rate, $rx_norm_gain, $rx_fft_size, $mode)
 self.$(id)_thread = threading.Thread(target=self.$(id).start_server)
 self.$(id)_thread.daemon = True
 self.$(id)_thread.start()</make>
@@ -23,11 +23,15 @@ self.$(id)_thread.start()</make>
     <type>real</type>
   </param>
   <param>
+    <name>TX Normalized Gain</name>
+    <key>tx_norm_gain</key>
+    <type>real</type>
+  </param>
+  <param>
     <name>TX FFT M Size</name>
     <key>tx_fft_size</key>
     <type>int</type>
   </param>
-
   <param>
     <name>RX Centre Frequency</name>
     <key>rx_center_frequency</key>
@@ -36,6 +40,11 @@ self.$(id)_thread.start()</make>
   <param>
     <name>RX Sampling Rate</name>
     <key>rx_samp_rate</key>
+    <type>real</type>
+  </param>
+  <param>
+    <name>RX Normalized Gain</name>
+    <key>rx_norm_gain</key>
     <type>real</type>
   </param>
   <param>
@@ -56,6 +65,10 @@ self.$(id)_thread.start()</make>
     <option>
       <name>USRP</name>
       <key>"USRP"</key>
+    </option>
+    <option>
+      <name>File Dump/Load</name>
+      <key>"FILE"</key>
     </option>
     <option>
       <name>Image Generation</name>

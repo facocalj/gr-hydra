@@ -39,6 +39,8 @@ hydra_gr_server_impl::init_usrp(std::string mode)
       g_usrp = std::make_shared<device_uhd>();
     else if (mode == "IMG_GEN")
       g_usrp = std::make_shared<device_image_gen>();
+    else if (mode == "FILE")
+      g_usrp = std::make_shared<device_file>();
     else if (mode == "LOOPBACK")
        g_usrp = std::make_shared<device_loopback>();
     else
@@ -50,6 +52,7 @@ hydra_gr_server_impl::init_usrp(std::string mode)
 void
 hydra_gr_server_impl::set_tx_config(double d_center_frequency,
                                     double d_samp_rate,
+                                    double d_norm_gain,
                                     size_t d_fft_size,
                                     std::string mode)
 {
@@ -58,6 +61,7 @@ hydra_gr_server_impl::set_tx_config(double d_center_frequency,
   main->set_tx_config(g_usrp,
                       d_center_frequency,
                       d_samp_rate,
+                      d_norm_gain,
                       d_fft_size);
 }
 
@@ -65,6 +69,7 @@ hydra_gr_server_impl::set_tx_config(double d_center_frequency,
 void
 hydra_gr_server_impl::set_rx_config(double d_center_frequency,
                                     double d_samp_rate,
+                                    double d_norm_gain,
                                     size_t d_fft_size,
                                     std::string mode)
 {
@@ -73,6 +78,7 @@ hydra_gr_server_impl::set_rx_config(double d_center_frequency,
   main->set_rx_config(g_usrp,
                       d_center_frequency,
                       d_samp_rate,
+                      d_norm_gain,
                       d_fft_size);
 }
 

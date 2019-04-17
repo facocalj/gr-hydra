@@ -20,7 +20,8 @@ import threading
 
 class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
 
-    def __init__(self, ansibleIP='127.0.0.1', freqrx=2e9, freqtx=2e9, mul=0.01, samp_rate=200e3, vr1offset=-300e3, vr2offset=700e3):
+    def __init__(self, ansibleIP='127.0.0.1', freqrx=2.42e9+300e3,
+                 freqtx=2.42e9-300e3, mul=0.04, samp_rate=200e3, vr1offset=-300e3, vr2offset=700e3):
         gr.top_block.__init__(self, "Ansible Hydra Gr Client 1Tx 1Rx")
 
         ##################################################
@@ -37,10 +38,10 @@ class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
-        self.hydra_gr_sink_0 = hydra.hydra_gr_client_sink(1, ansibleIP, 5000)
-        self.hydra_gr_sink_0.start_client(freqtx + vr1offset, samp_rate * 2, 1024)
-        self.hydra_gr__source_0_0 = hydra.hydra_gr_client_source(1, ansibleIP, ansibleIP, 5000)
-        self.hydra_gr__source_0_0.start_client(freqrx + vr1offset, samp_rate * 2, 10000)
+        self.hydra_gr_sink_0 = hydra.hydra_gr_client_sink(7, ansibleIP, 5000)
+        self.hydra_gr_sink_0.start_client(freqtx, samp_rate , 1024)
+        self.hydra_gr__source_0_0 = hydra.hydra_gr_client_source(7, ansibleIP, ansibleIP, 5000)
+        self.hydra_gr__source_0_0.start_client(freqrx, samp_rate , 10000)
 
         self.digital_ofdm_tx_0 = digital.ofdm_tx(
         	  fft_len=64, cp_len=16,
