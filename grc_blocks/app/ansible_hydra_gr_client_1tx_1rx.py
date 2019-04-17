@@ -38,9 +38,11 @@ class ansible_hydra_gr_client_1tx_1rx(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
-        self.hydra_gr_sink_0 = hydra.hydra_gr_client_sink(7, ansibleIP, 5000)
+        self.hydra_gr_sink_0 = hydra.hydra_gr_client_sink(
+            7, ansibleIP, 5000, 'default')
         self.hydra_gr_sink_0.start_client(freqtx, samp_rate , 1024)
-        self.hydra_gr__source_0_0 = hydra.hydra_gr_client_source(7, ansibleIP, ansibleIP, 5000)
+        self.hydra_gr__source_0_0 = hydra.hydra_gr_client_source(
+            7, ansibleIP, 5000, 'default')
         self.hydra_gr__source_0_0.start_client(freqrx, samp_rate , 10000)
 
         self.digital_ofdm_tx_0 = digital.ofdm_tx(

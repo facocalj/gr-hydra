@@ -9,7 +9,7 @@ hydra_client::hydra_client(std::string client_ip,
                            bool b_debug)
 {
   s_client_host = client_ip;
-  s_group = s_group;
+  s_group = s_group_name;
   s_server_port = std::to_string(u_port);
   u_id = u_client_id;
   b_debug_flag = b_debug;
