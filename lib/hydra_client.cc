@@ -5,14 +5,16 @@ namespace hydra {
 hydra_client::hydra_client(std::string client_ip,
                            unsigned int u_port,
                            unsigned int u_client_id,
+                           std::string s_group_name,
                            bool b_debug)
 {
   s_client_host = client_ip;
+  s_group = s_group;
   s_server_port = std::to_string(u_port);
   u_id = u_client_id;
   b_debug_flag = b_debug;
 
-  std::cout << boost::format("s_client_host: %s -  s_server_host: %s") % s_client_host % s_server_host << std::endl;
+  std::cout << boost::format("s_group: %s - s_client_host: %s -  s_server_host: %s") % s_group % s_client_host % s_server_host << std::endl;
 }
 
 hydra_client::~hydra_client()
@@ -77,9 +79,8 @@ hydra_client::discover_server(
       std::cout <<  "<client> Discovering server" << std::endl;;
     }
 
-
-   const int MAX_MSG = 1000;
-   send_udp(client_ip, client_ip, true, 5001);
+   const int MAX_MSG = 100;
+   send_udp(client_ip, s_group + ":" + client_ip, true, 5001);
 
    char msg[MAX_MSG];
    if (recv_udp(msg, MAX_MSG, false, 5002, {5, 0}))

@@ -1,12 +1,5 @@
 #include "hydra/util/udp.h"
 
-#include <iostream>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <vector>
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
-#include <numeric>
 
 namespace hydra {
 
@@ -15,35 +8,35 @@ int send_udp(std::string server_ip,
     int broadcast,
     int port)
 {
-   int sd, rc;
-   struct sockaddr_in cliAddr, remoteServAddr;
-   struct hostent *h;
+  int sd, rc;
+  struct sockaddr_in cliAddr, remoteServAddr;
+  struct hostent *h;
 
-   // Change the server_ip address to end with '255' if broadcast == true
-   if (broadcast)
-   {
-      std::vector<std::string> sp;
-      boost::split(sp, server_ip, [](char c){return c == '.';});
+  // Change the server_ip address to end with '255' if broadcast == true
+  if (broadcast)
+  {
+    // Temporary vector
+    std::vector<std::string> sp;
+    // Split the server string
+    boost::split(sp, server_ip, boost::is_any_of("."));
 
-      if (sp.size()  != 4)
-      {
-         std::cout << "<server/autodiscovery> Invalid IP format." << std::endl;
-         return -1;
-      }
+    // Check size
+    if (sp.size()  != 4)
+    {
+      std::cout << "<server/autodiscovery> Invalid IP format." << std::endl;
+      return -1;
+    }
 
-
-      // change and join
-      sp[3] = "255";
-      server_ip = std::accumulate(sp.begin(),
-                                  sp.end(),
-                                  std::string(),
-                                  [](std::string &ss, std::string &s) { return ss.empty() ? s : ss + "." + s;
-                                  });
-   }
+    // Replace last octet
+    sp[3] = "255";
+    // Join new string
+    server_ip =  boost::algorithm::join(sp, ".");
+  }
 
    /* get server IP address (no check if input is IP address or DNS name */
    h = gethostbyname(server_ip.c_str());
-   if (h == NULL) exit(1);
+   // Exit if get hostname failed
+   if (h == NULL){ exit(1);}
 
    remoteServAddr.sin_family = h->h_addrtype;
    memcpy((char *) &remoteServAddr.sin_addr.s_addr, h->h_addr_list[0], h->h_length);
@@ -68,6 +61,7 @@ int send_udp(std::string server_ip,
       close(sd);
       return -1;
    }
+
 
    std::cout << boost::format("<server/autodiscovery> Sending: '%s' to %s:%d") % msg % server_ip % port  << std::endl;
 

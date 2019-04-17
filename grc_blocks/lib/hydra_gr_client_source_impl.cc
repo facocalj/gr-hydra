@@ -12,24 +12,24 @@ namespace gr {
 
 hydra_gr_client_source::sptr
 hydra_gr_client_source::make(unsigned           u_id,
-                             const std::string &c_host,
                              const std::string &s_host,
-                             unsigned int       port)
+                             unsigned int       port,
+                             const std::string &s_group)
 {
-  return gnuradio::get_initial_sptr(new hydra_gr_client_source_impl(u_id, c_host, s_host, port));
+  return gnuradio::get_initial_sptr(new hydra_gr_client_source_impl(u_id, s_host, port, s_group));
 }
 
 /* CTOR
  */
 hydra_gr_client_source_impl::hydra_gr_client_source_impl(unsigned int u_id,
-                                                         const std::string &c_host,
                                                          const std::string &s_host,
-                                                         unsigned int u_port):
+                                                         unsigned int u_port,
+                                                         const std::string &s_group):
   gr::hier_block2("gr_client_source",
                   gr::io_signature::make(0, 0, 0),
                   gr::io_signature::make(1, 1, sizeof(gr_complex)))
 {
-  client = std::make_unique<hydra_client>(c_host, u_port, u_id, true);
+  client = std::make_unique<hydra_client>(s_host, u_port, u_id, s_group, true);
   client->check_connection();
 }
 
@@ -55,21 +55,12 @@ void hydra_gr_client_source_impl::start_client(double d_center_frequency,
   {
 #if 1
     std::string addr = "tcp://" + rx_config.server_ip + ":" + std::to_string(rx_config.server_port);
-    std::cout << "<hydra/source> Server Address: " << addr << std::endl;
-
-    std::cout << "making ZMQ" << std::endl;
     char * ad = "tcp://127.0.0.1:33000";
     gr::zeromq::pull_source::sptr d_source = gr::zeromq::pull_source::make(sizeof(gr_complex),
                                              1,
                                              ad);
-
-    std::cout << "made ZMQ" << std::endl;
-
 #endif
     connect(d_source, 0, self(), 0);
-
-    std::cout << "made connection" << std::endl;
-
   }
   else
   {

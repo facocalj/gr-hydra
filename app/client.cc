@@ -21,7 +21,7 @@ int main()
   std::cout << "------------- Requesting" << std::endl;
   std::cout << "CF: "  << vr_1_cf << "\tBW: " <<  vr_1_bw << std::endl;
 
-  hydra::hydra_client s1 = hydra::hydra_client("127.0.0.1", 5000, 91, true);
+  hydra::hydra_client s1 = hydra::hydra_client("127.0.0.1", 5000, 91, "default", true);
 
   s1.check_connection();
   s1.query_resources();

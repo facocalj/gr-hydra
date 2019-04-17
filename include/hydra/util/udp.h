@@ -1,8 +1,20 @@
 #ifndef UTIL_UDP_INCLUDE_H
 #define UTIL_UDP_INCLUDE_H
 
+// STD dependencies
 #include <stdlib.h>
 #include <string>
+#include <iostream>
+#include <numeric>
+#include <vector>
+// Boost dependencies
+//
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
+// Other dependencies
+#include <netdb.h>
+#include <arpa/inet.h>
 
 namespace hydra {
 

@@ -4,10 +4,13 @@
 namespace hydra {
 
 HydraServer::HydraServer(std::string server_addr,
+                         std::string group_name,
                          std::shared_ptr<HydraCore> core)
 {
   // Get the server port
   s_server_addr = server_addr;
+  // Get the group name
+  s_group = group_name;
 
   // Pointer to the XVL Core
   p_core = core;
@@ -21,24 +24,46 @@ HydraServer::HydraServer(std::string server_addr,
 int
 HydraServer::auto_discovery()
 {
-   const int MAX_MSG = 1000;
+   const int MAX_MSG = 100;
    char msg[MAX_MSG];
 
-   int rcv = 0;
+   std::vector<std::string> client_info;
 
    int rx_port = 5001;
    int tx_port = 5002;
 
    std::cout << "<server/autodiscovery> Waiting for data on port UDP " <<  rx_port << std::endl;
 
+   // Check receive status
+   int rcv = 0;
    // Event loop stop condition
    while (not thr_stop)
    {
       rcv = recv_udp(msg, MAX_MSG, true, rx_port, {1, 0});
 
       if (rcv != -1)
-        send_udp(msg, s_server_addr, false, tx_port);
-   }
+      {
+        // Split the received message
+        boost::split(client_info, msg, boost::is_any_of(":"));
+
+        // If the message was not formatted properly
+        if (client_info.size() != 2)
+        {
+          std::cout << "<server/autodiscovery> Received malformed message: " << msg <<std::endl;
+        }
+        // If we received a message from the same group
+        else if (s_group == client_info[0])
+        {
+          // Return message
+          send_udp(client_info[1], s_server_addr, false, tx_port);
+        }
+        else
+        {
+          std::cout << "<server/autodiscovery> Received message from wrong group: " << client_info[0] << std::endl;
+        }
+
+      } // End RECV checl
+   } // End loop
 
    // Output debug information
    // std::cout << "<server/audodiscovery> Stopped autodiscovery" << std::endl;

@@ -17,7 +17,10 @@ public:
     */
    HydraMain();
 
-   HydraMain(std::string server_addr, unsigned int u_monitor_port = 4996);
+   HydraMain(
+       std::string server_addr,
+       std::string group_name,
+       unsigned int u_monitor_port = 4996);
 
    void set_rx_config(uhd_hydra_sptr usrp,
                       const double &d_cf,
@@ -38,6 +41,7 @@ public:
 
 private:
    std::string s_server_addr;
+   std::string s_group;
 
    // Pointer to the XVL Server
    std::shared_ptr<HydraServer> server;

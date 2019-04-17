@@ -4,15 +4,19 @@ namespace hydra {
 
 // Real radio centre frequency, bandwidth; control port; hypervisor's sampling rate, FFT size
 HydraMain::HydraMain(std::string server_addr,
+                     std::string group_name,
                      unsigned int u_monitor_port)
 {
-   /* Set the control port */
+  /* Set the control port */
    s_server_addr = server_addr;
 
-   // Initialise the stats reporter
-   // monitor = std::make_shared<xvl_monitor>(u_monitor_port);
-   // Initialise the core XVL
-   core = std::make_shared<HydraCore>();
+  // Set the group name
+   s_group = group_name;
+
+  // Initialise the stats reporter
+  // monitor = std::make_shared<xvl_monitor>(u_monitor_port);
+  // Initialise the core XVL
+  core = std::make_shared<HydraCore>();
 }
 
 void
@@ -40,7 +44,7 @@ void HydraMain::set_tx_config(uhd_hydra_sptr usrp,
 void HydraMain::run()
 {
    // Initialise the server
-   server = std::make_shared<HydraServer>(s_server_addr, core);
+   server = std::make_shared<HydraServer>(s_server_addr, s_group, core);
 
    // Run the statistics reporting server
    // monitor->run();

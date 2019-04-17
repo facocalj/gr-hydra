@@ -19,7 +19,7 @@ class hydra_gr_server_impl : public hydra_gr_server
 
   /** CTOR
    */
-   hydra_gr_server_impl(std::string u_port);
+   hydra_gr_server_impl(std::string server_addr, std::string s_group = "default");
 
   /** DTOR
    */

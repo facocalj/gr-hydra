@@ -13,10 +13,11 @@ namespace gr {
 hydra_gr_client_sink::sptr
 hydra_gr_client_sink::make(unsigned u_id,
                            const std::string &host,
-                           unsigned int port)
+                           unsigned int port,
+                           const std::string &s_group)
 {
   return gnuradio::get_initial_sptr(
-      new hydra_gr_client_sink_impl(u_id, host, port)
+      new hydra_gr_client_sink_impl(u_id, host, port, s_group)
   );
 }
 
@@ -26,13 +27,14 @@ hydra_gr_client_sink::make(unsigned u_id,
 hydra_gr_client_sink_impl::hydra_gr_client_sink_impl(
                    unsigned int u_id,
                    const std::string &s_host,
-                   unsigned int u_port)
+                   unsigned int u_port,
+                   const std::string &s_group)
   :gr::hier_block2("gr_client_sink",
       gr::io_signature::make(1, 1, sizeof(gr_complex)),
       gr::io_signature::make(0, 0, 0))
 {
   g_host = s_host;
-  client = std::make_unique<hydra_client>(g_host, u_port, u_id, true);
+  client = std::make_unique<hydra_client>(g_host, u_port, u_id, s_group, true);
 
   client->check_connection();
 }

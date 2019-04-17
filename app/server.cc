@@ -44,6 +44,7 @@ main(int argc, const char *argv[])
       ("rx_fft", value<unsigned int>()->default_value(1024), "Receiver FFT Size")
       ("host", value<std::string>()->default_value("127.0.0.1"), "Server Host")
       ("port", value<unsigned int>()->default_value(5000), "Server Port")
+      ("group", value<std::string>()->default_value("default"), "Hypervisor Group")
       ("backend", value<std::string>()->default_value("usrp"), "Backend (usrp, loop, plot, file)");
 
     // Instantiate variables map, store, and notify methods
@@ -72,8 +73,8 @@ main(int argc, const char *argv[])
     std::cout << "\t"<< "FFT Size " << vm["rx_fft"].as<unsigned int>() << "\n" << std::endl;
     std::cout << delimiter << "    Server Parameters   " << delimiter << std::endl;
     std::cout << "Host " << vm["host"].as<std::string>();
-    std::cout << "\t" << "Port " << vm["port"].as<unsigned int>() << "\n" << std::endl;
-
+    std::cout << "\t" << "Port " << vm["port"].as<unsigned int>() ;
+    std::cout << "\t"<< "Group " << vm["group"].as<std::string>() << "\n" << std::endl;
 
     // Extract the backend type
     std::string backend_type = vm["backend"].as<std::string>();
@@ -120,9 +121,12 @@ main(int argc, const char *argv[])
    /* Control port */
    unsigned int u_port = vm["port"].as<unsigned int>();
    std::string s_host = vm["host"].as<std::string>();
+   std::string s_group= vm["group"].as<std::string>();
 
    /* Instantiate XVL */
-   hydra_instance = new hydra::HydraMain(s_host + ":" + std::to_string(u_port));
+   hydra_instance = new hydra::HydraMain(
+       s_host + ":" + std::to_string(u_port),
+       s_group);
 
    hydra_instance->set_tx_config(
      backend,

@@ -4,7 +4,7 @@
   <category>[HyDRA]</category>
   <import>import threading</import>
   <import>import hydra</import>
-  <make>hydra.hydra_gr_server($ip)
+  <make>hydra.hydra_gr_server($ip, $group)
 if $(tx_center_frequency) > 0 and $(tx_samp_rate) > 0 and $(tx_fft_size) > 0 and $(tx_norm_gain) >= 0 and $(tx_norm_gain) >= 0:
    self.$(id).set_tx_config($tx_center_frequency, $tx_samp_rate, $tx_norm_gain,$tx_fft_size, $mode)
 if $(rx_center_frequency) > 0 and $(rx_samp_rate) > 0 and $(rx_fft_size) > 0 and $(rx_norm_gain) >= 0 and $(rx_norm_gain) >= 0:
@@ -64,6 +64,12 @@ self.$(id)_thread.start()</make>
     <name>Server IP:PORT</name>
     <key>ip</key>
     <value>127.0.0.01:5000</value>
+    <type>string</type>
+  </param>
+  <param>
+    <name>Server Group</name>
+    <key>group</key>
+    <value>default</value>
     <type>string</type>
   </param>
   <param>

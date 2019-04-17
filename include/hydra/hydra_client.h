@@ -37,6 +37,7 @@ public:
    hydra_client(std::string client_ip = "localhost",
                 unsigned int u_port = 5000,
                 unsigned int u_client_id = 10,
+                std::string s_group_name = "default",
                 bool b_debug = false);
 
    /* DTOR
@@ -67,6 +68,7 @@ private:
    int discover_server(std::string client, std::string &server_ip);
 
 
+   std::string s_group;
    std::string s_client_host;
    std::string s_server_host;
    std::string s_server_port;
