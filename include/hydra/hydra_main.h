@@ -20,14 +20,16 @@ public:
    HydraMain(std::string server_addr, unsigned int u_monitor_port = 4996);
 
    void set_rx_config(uhd_hydra_sptr usrp,
-                      double d_cf,
-                      double d_bw,
-                      unsigned int u_fft_size);
+                      const double &d_cf,
+                      const double &d_bw,
+                      const double &d_ng,
+                      const unsigned int &u_fft_size);
 
    void set_tx_config(uhd_hydra_sptr usrp,
-                      double d_cf,
-                      double d_bw,
-                      unsigned int u_fft_size);
+                      const double &d_cf,
+                      const double &d_bw,
+                      const double &d_ng,
+                      const unsigned int &u_fft_size);
 
    // Run method
    void run();

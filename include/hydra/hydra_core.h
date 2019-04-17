@@ -44,15 +44,17 @@ public:
 
    // Set RX resources
    void set_rx_resources(uhd_hydra_sptr usrp,
-                         double d_centre_freq,
-                         double d_bandwidth,
-                         unsigned int u_fft_size);
+                         double d_centre_freq = 2e9,
+                         double d_bandwidth = 1e6,
+                         double d_norm_gain = 0.0,
+                         unsigned int u_fft_size = 1024);
 
    // Set TX resources
    void set_tx_resources(uhd_hydra_sptr usrp,
-                         double d_centre_freq,
-                         double d_bandwidth,
-                         unsigned int u_fft_size);
+                         double d_centre_freq = 2e9,
+                         double d_bandwidth = 1e6,
+                         double d_norm_gain = 0.6,
+                         unsigned int u_fft_size = 1024);
 
    // Request RX resources
    int request_rx_resources(unsigned int u_id,

@@ -36,9 +36,11 @@ main(int argc, const char *argv[])
       ("help,h", "Help Message")
       ("tx_freq", value<double>()->default_value(2e9), "Transmitter Centre Frequency")
       ("tx_rate", value<double>()->default_value(1e6), "Transmitter Sampling Rate")
+      ("tx_gain", value<double>()->default_value(0.6), "Transmitter Normalized Gain")
       ("tx_fft", value<unsigned int>()->default_value(1024), "Transmitter FFT Size")
       ("rx_freq", value<double>()->default_value(2e9), "Receiver Centre Frequency")
       ("rx_rate", value<double>()->default_value(1e6), "Receiver Sampling Rate")
+      ("rx_gain", value<double>()->default_value(0.0), "Receiver Normalized Gain")
       ("rx_fft", value<unsigned int>()->default_value(1024), "Receiver FFT Size")
       ("host", value<std::string>()->default_value("127.0.0.1"), "Server Host")
       ("port", value<unsigned int>()->default_value(5000), "Server Port")
@@ -61,10 +63,12 @@ main(int argc, const char *argv[])
     std::cout << delimiter << " Transmitter Parameters " << delimiter << std::endl;
     std::cout << "Centre Frequency " << vm["tx_freq"].as<double>();
     std::cout << "\t"<< "Sampling Rate " << vm["tx_rate"].as<double>();
+    std::cout << std::setprecision(2) << "\t"<< "Normalized Gain " << vm["tx_gain"].as<double>();
     std::cout << "\t"<< "FFT Size " << vm["tx_fft"].as<unsigned int>() << "\n" << std::endl;
     std::cout << delimiter << "  Receiver Parameters   " << delimiter << std::endl;
     std::cout << "Centre Frequency " << vm["rx_freq"].as<double>();
     std::cout << "\t"<< "Sampling Rate " << vm["rx_rate"].as<double>();
+    std::cout << std::setprecision(2) << "\t"<< "Normalized Gain " << vm["rx_gain"].as<double>();
     std::cout << "\t"<< "FFT Size " << vm["rx_fft"].as<unsigned int>() << "\n" << std::endl;
     std::cout << delimiter << "    Server Parameters   " << delimiter << std::endl;
     std::cout << "Host " << vm["host"].as<std::string>();
@@ -102,13 +106,15 @@ main(int argc, const char *argv[])
     }
 
    /* TRANSMITTER */
-   double d_tx_centre_freq = vm["tx_freq"].as<double>();
-   double d_tx_samp_rate   = vm["tx_rate"].as<double>();
+   double d_tx_centre_freq    = vm["tx_freq"].as<double>();
+   double d_tx_samp_rate      = vm["tx_rate"].as<double>();
+   double d_tx_norm_gain      = vm["tx_gain"].as<double>();
    unsigned int u_tx_fft_size = vm["tx_fft"].as<unsigned int>();
 
    /* RECEIVER */
-   double d_rx_centre_freq = vm["rx_freq"].as<double>();
-   double d_rx_samp_rate   = vm["rx_rate"].as<double>();
+   double d_rx_centre_freq    = vm["rx_freq"].as<double>();
+   double d_rx_samp_rate      = vm["rx_rate"].as<double>();
+   double d_rx_norm_gain      = vm["rx_gain"].as<double>();
    unsigned int u_rx_fft_size = vm["rx_fft"].as<unsigned int>();
 
    /* Control port */
@@ -122,12 +128,14 @@ main(int argc, const char *argv[])
      backend,
      d_tx_centre_freq,
      d_tx_samp_rate,
+     d_tx_norm_gain,
      u_tx_fft_size);
 
    hydra_instance->set_rx_config(
      backend,
      d_rx_centre_freq,
      d_rx_samp_rate,
+     d_rx_norm_gain,
      u_rx_fft_size);
 
    /* Run server */

@@ -17,22 +17,23 @@ HydraMain::HydraMain(std::string server_addr,
 
 void
 HydraMain::set_rx_config(uhd_hydra_sptr usrp,
-                         double d_cf,
-                         double d_bw,
-                         unsigned int u_fft_size)
+                         const double &d_cf,
+                         const double &d_bw,
+                         const double &d_ng,
+                         const unsigned int &u_fft_size)
 {
   // Configure receiver resources
-  core->set_rx_resources(usrp, d_cf, d_bw, u_fft_size);
+  core->set_rx_resources(usrp, d_cf, d_bw, d_ng, u_fft_size);
 }
 
 void HydraMain::set_tx_config(uhd_hydra_sptr usrp,
-                              double d_cf,
-                              double d_bw,
-                              unsigned int u_fft_size)
-
+                              const double &d_cf,
+                              const double &d_bw,
+                              const double &d_ng,
+                              const unsigned int &u_fft_size)
 {
   // Configure transmitter resources
-  core->set_tx_resources(usrp, d_cf, d_bw, u_fft_size);
+  core->set_tx_resources(usrp, d_cf, d_bw, d_ng, u_fft_size);
 }
 
 // Run server

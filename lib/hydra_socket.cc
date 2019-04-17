@@ -35,31 +35,38 @@ zmq_source::run()
   std::string addr = "tcp://" + s_host + ":" + s_port;
   std::cout << "<zmq/source> Remote client address: " << addr << std::endl;
 
+  // Specify a timeout and configure the socket
+  socket.setsockopt(ZMQ_RCVTIMEO, 100);
   // Connect to remote client
   socket.connect(addr.c_str());
+
+  // Create temporary variables outsize the loop
+  div_t type_size_div;
+  // Received message flag
+  int rc;
 
   // Event loop
   while (g_th_run)
   {
     // Receive information from the client
-    socket.recv(&message, ZMQ_NOBLOCK);
+    rc = socket.recv(&message);
 
-    // TODO recv should be blocking, upon error-less reception, enter here
-    if (message.size() > 0)
+    // If we received a message and the thread should be alive
+    if (rc and g_th_run)
     {
-      if (message.size() % sizeof(iq_sample) != 0)
+      // Divide the message size by the size of an IQ sample
+      type_size_div = std::div(static_cast<int>(message.size()), sizeof(iq_sample));
+
+      // If there's a remainder
+      if (type_size_div.rem)
+      {
         std::cout << "<zmq/source> Incomplete message." << std::endl;
+      }
 
       // Write the amount of IQ samples to the buffer
       p_output_buffer->write(
           static_cast<iq_sample *>(message.data()),
-          message.size()/sizeof(iq_sample));
-    }
-    // If not, lets wait a bit
-    else
-    {
-      // Sleep for a microssecond and prevent this thread to explode
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
+          type_size_div.quot);
     }
     // Clear message data
     message.rebuild();
@@ -103,34 +110,34 @@ zmq_sink::run()
 {
   // Construct the URI
   std::string addr = "tcp://" + s_host + ":" + s_port;
-  std::cout << "<zmq_sink> Local server address: " << addr << std::endl;
+  std::cout << "<zmq/sink> Local server address: " << addr << std::endl;
 
+  // Set timeout for send operation
+  socket.setsockopt(ZMQ_SNDTIMEO, 100);
   // Bind address
   socket.bind(addr.c_str());
-  // Set timeout for send operation
-  socket.setsockopt(ZMQ_SNDTIMEO, 1000);
 
-  // Temp container for incoming IQ samples
-  std::vector<iq_sample> tmp;
+  // Initialize temporary variables outside the loop
+  unsigned int u_buffer_size;
+  unsigned int u_message_size;
 
   // Event loop
   while (g_th_run)
   {
+    // Get the buffer size
+    u_buffer_size = p_input_buffer->size();
     // If there is anything to transmit
-    if (p_input_buffer->size())
+    if (u_buffer_size)
     {
-      // If we should stop running
-      if (not g_th_run){break;}
-        // Get all the stored samples
-        tmp = p_input_buffer->read(p_input_buffer->size());
-        // Allocate enough memory for this message
-        message.rebuild(tmp.size() * sizeof(iq_sample));
+      // Calculate the message size
+      u_message_size = u_buffer_size * sizeof(iq_sample);
+      // Allocate enough memory for this message
+      message.rebuild(u_message_size);
 
-        // Copy the samples onto the message object
-        std::copy(
-            tmp.begin(),
-            tmp.end(),
-            static_cast<iq_sample *>(message.data()));
+      // Copy the samples onto the message object
+      std::memcpy(message.data(),
+          &p_input_buffer->read(u_buffer_size).front(),
+          u_message_size);
 
       // If we are still running
       if (g_th_run)

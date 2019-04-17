@@ -28,8 +28,28 @@ class abstract_device
   virtual void send(const iq_window &buf, size_t len) { std::cerr << __PRETTY_FUNCTION__ << " not implemented" << std::endl;};
   virtual size_t receive(iq_window &buf, size_t len) { std::cerr << __PRETTY_FUNCTION__ << " not implemented" << std::endl;};
 
-  virtual void set_tx_config(double freq, double rate, double gain){ g_tx_freq = freq; g_tx_rate = rate; g_tx_gain = gain;};
-  virtual void set_rx_config(double freq, double rate, double gain){ g_rx_freq = freq; g_rx_rate = rate; g_rx_gain = gain;};
+  virtual void set_tx_config(double freq, double rate, double gain)
+  {
+    // Check for invalid RF parameters
+    if ((freq <= 0.0) or (rate <= 0.0) or (gain < 0.0) or (gain > 1.0))
+    {
+      std::cerr << "<uhd_interface> Invalid TX RF parameters: Freq=" << freq << "[Hz], Rate=" << rate <<"[Hz], Gain=" << gain << std::endl;
+      exit(40);
+    }
+    // Otherwise, continue
+    g_tx_freq = freq; g_tx_rate = rate; g_tx_gain = gain;
+  };
+  virtual void set_rx_config(double freq, double rate, double gain)
+  {
+    // Check for invalid RF parameters
+    if ((freq <= 0.0) or (rate <= 0.0) or (gain < 0.0) or (gain > 1.0))
+    {
+      std::cerr << "<uhd_interface> Invalid RX RF parameters: Freq=" << freq << "[Hz], Rate=" << rate << "[Hz], Gain=" << gain << std::endl;
+      exit(40);
+    }
+    // Otherwise, continue
+    g_rx_freq = freq; g_rx_rate = rate; g_rx_gain = gain;
+  };
 
   virtual void release() {};
 
