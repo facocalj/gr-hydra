@@ -6,7 +6,8 @@ namespace hydra {
 int send_udp(std::string server_ip,
     std::string msg,
     int broadcast,
-    int port)
+    int port,
+    hydra_log* logger)
 {
   int sd, rc;
   struct sockaddr_in cliAddr, remoteServAddr;
@@ -23,7 +24,15 @@ int send_udp(std::string server_ip,
     // Check size
     if (sp.size()  != 4)
     {
-      std::cout << "<server/autodiscovery> Invalid IP format." << std::endl;
+      if (logger != nullptr)
+      {
+        logger->error("Invalid IP format.");
+      }
+      else
+      {
+        std::cout << "<server/autodiscovery> Invalid IP format." << std::endl;
+      }
+
       return -1;
     }
 
@@ -57,13 +66,27 @@ int send_udp(std::string server_ip,
 
    if (rc<0)
    {
-      std::cout << "<server/autodiscovery> Could not bind." << std::endl;
+       if (logger != nullptr)
+      {
+        logger->error("Could not bind.");
+      }
+      else
+      {
+        std::cout << "<server/autodiscovery> Could not bind." << std::endl;
+      }
+
       close(sd);
       return -1;
    }
 
-
-   std::cout << boost::format("<server/autodiscovery> Sending: '%s' to %s:%d") % msg % server_ip % port  << std::endl;
+   if (logger != nullptr)
+   {
+     logger->info(str(boost::format("Sending: '%s' to %s:%d") % msg % server_ip % port ));
+   }
+   else
+   {
+     std::cout << boost::format("<server/autodiscovery> Sending: '%s' to %s:%d") % msg % server_ip % port  << std::endl;
+   }
 
    /* send data */
    rc = sendto(sd,
@@ -75,7 +98,15 @@ int send_udp(std::string server_ip,
 
    if (rc<0)
    {
-      std::cout << "<server/autodiscovery> Could not send." << std::endl;
+       if (logger != nullptr)
+      {
+        logger->error("Could not send.");
+      }
+      else
+      {
+        std::cout << "<server/autodiscovery> Could not send." << std::endl;
+      }
+
       close(sd);
       return -1;
    }
@@ -89,7 +120,8 @@ recv_udp(char *msg,
     size_t msg_len,
     int broadcast,
     int port,
-    struct timeval timeout)
+    struct timeval timeout,
+    hydra_log* logger)
 {
    int sd, rc, n, cliLen;
    struct sockaddr_in cliAddr, servAddr;
@@ -98,21 +130,43 @@ recv_udp(char *msg,
    sd=socket(AF_INET, SOCK_DGRAM, 0);
    if (sd<0)
    {
-      std::cout << "<server/autodiscovery> Could not open socket." << std::endl;
-      return -1;
+     if (logger != nullptr)
+     {
+       logger->error("Could not open socket.");
+     }
+     else
+     {
+       std::cout << "<server/autodiscovery> Could not open socket." << std::endl;
+     }
+     return -1;
    }
 
    if (setsockopt(sd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) == -1)
    {
-      std::cout << "<server/autodiscovery> Could not setsockopt BROADCAST." << std::endl;
-      return -1;
+
+  if (logger != nullptr)
+     {
+       logger->error("Could not setsockopt BROADCAST.");
+     }
+     else
+     {
+       std::cout << "<server/autodiscovery> Could not setsockopt BROADCAST." << std::endl;
+     }
+     return -1;
    }
 
    if ((timeout.tv_sec > 0 || timeout.tv_usec > 0) &&
        (setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval)) == -1))
    {
-      std::cout << "<server/autodiscovery> Could not setsockopt SO_RCVTIMEO." << std::endl;
-      return -1;
+     if (logger != nullptr)
+     {
+       logger->error("Could not setsockopt SO_RCVTIMEO.");
+     }
+     else
+     {
+       std::cout << "<server/autodiscovery> Could not setsockopt SO_RCVTIMEO." << std::endl;
+     }
+     return -1;
    }
 
    /* bind local server port */
@@ -138,9 +192,15 @@ recv_udp(char *msg,
       return -1;
    }
 
-
    /* print received message */
-   std::cout << boost::format("<server/autodiscovery> Received from %s: UDP %u: %s") % inet_ntoa(cliAddr.sin_addr) % ntohs(cliAddr.sin_port) % msg << std::endl;
+   if (logger != nullptr)
+   {
+     logger->info(str(boost::format("Received from %s: UDP %u: %s") % inet_ntoa(cliAddr.sin_addr) % ntohs(cliAddr.sin_port) % msg));
+   }
+   else
+   {
+     std::cout << boost::format("<server/autodiscovery> Received from %s: UDP %u: %s") % inet_ntoa(cliAddr.sin_addr) % ntohs(cliAddr.sin_port) % msg << std::endl;
+   }
 
    //}
    close(sd);

@@ -43,7 +43,7 @@ HydraServer::auto_discovery()
   // Event loop stop condition
   while (not thr_stop)
   {
-    rcv = recv_udp(msg, MAX_MSG, true, rx_port, {1, 0});
+    rcv = recv_udp(msg, MAX_MSG, true, rx_port, {1, 0}, &ad_logger);
 
     if (rcv != -1)
     {
@@ -59,7 +59,7 @@ HydraServer::auto_discovery()
       else if (s_group == client_info[0])
       {
         // Return message
-        send_udp(client_info[1], s_server_addr, false, tx_port);
+        send_udp(client_info[1], s_server_addr, false, tx_port, &ad_logger);
       }
       else
       {
