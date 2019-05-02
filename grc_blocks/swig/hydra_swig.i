@@ -12,7 +12,8 @@
 #include "hydra/hydra_gr_client_sink.h"
 #include "hydra/hydra_gr_client_source.h"
 
-#include "../../include/hydra//hydra_client.h"
+#include "../../include/hydra/hydra_client.h"
+#include "../../include/hydra/hydra_log.h"
 %}
 
 %include "hydra/hydra_gr_client_sink.h"

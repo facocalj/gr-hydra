@@ -29,7 +29,9 @@ class hydra_log
     hydra_log(){};
 
     // Real constructor
-    hydra_log(const std::string &name);
+    hydra_log(
+        const std::string &name,
+        const boost::log::trivial::severity_level &level = boost::log::trivial::debug);
 
     // Overloaded << operators
     void operator<<(const std::string &log);
@@ -43,7 +45,9 @@ class hydra_log
   private:
 
     // Initialise the logging backends
-    void log_init(const std::string &name);
+    void log_init(
+        const std::string &name,
+        const boost::log::trivial::severity_level &level);
 
     source_t p_logger;
 };

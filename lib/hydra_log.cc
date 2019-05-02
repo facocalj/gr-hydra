@@ -3,7 +3,9 @@
 namespace hydra {
 
 void
-hydra_log::log_init(const std::string &name)
+hydra_log::log_init(
+    const std::string &name,
+  const boost::log::trivial::severity_level &level)
 {
   boost::log::register_simple_formatter_factory<
     boost::log::trivial::severity_level, char>("Severity");
@@ -25,17 +27,18 @@ hydra_log::log_init(const std::string &name)
     boost::log::keywords::format = "[%TimeStamp%][%Channel%][%Severity%]: %Message%");
 
   // Filter the log output
-  boost::log::core::get()->set_filter(
-    boost::log::trivial::severity >= boost::log::trivial::info);
+  boost::log::core::get()->set_filter(boost::log::trivial::severity >= level);
 
   // Include common attributes, e.g., timestamp
   boost::log::add_common_attributes();
 };
 
-hydra_log::hydra_log(const std::string &name)
+hydra_log::hydra_log(
+    const std::string &name,
+    const boost::log::trivial::severity_level &level)
 {
   // Create the logger backend
-  log_init(name);
+  log_init(name, level);
 
   // Create logger object
   p_logger = source_t(
