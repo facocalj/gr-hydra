@@ -17,6 +17,8 @@ HydraMain::HydraMain(std::string server_addr,
   // monitor = std::make_shared<xvl_monitor>(u_monitor_port);
   // Initialise the core XVL
   core = std::make_shared<HydraCore>();
+
+  logger = hydra_log("main");
 }
 
 void
@@ -64,7 +66,7 @@ HydraMain::stop()
   server->stop();
 
   // Print
-  // std::cout << "Stopped all services" << std::endl;
+  // logger.info("Stopped all services");
 }
 
 

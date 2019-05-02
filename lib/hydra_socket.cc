@@ -17,6 +17,8 @@ zmq_source::zmq_source(const std::string& server_addr,
   p_output_buffer = std::make_shared<hydra_buffer<iq_sample>>(buf_size);
   // Create a thread to receive the data
   g_rx_thread = std::make_unique<std::thread>(&zmq_source::run, this);
+
+  logger = hydra_log("zmq|source");
 };
 
 void
@@ -33,7 +35,7 @@ zmq_source::run()
 {
   // Construct the URI
   std::string addr = "tcp://" + s_host + ":" + s_port;
-  std::cout << "<zmq/source> Remote client address: " << addr << std::endl;
+  logger.info("Remote client address: " + addr);
 
   // Specify a timeout and configure the socket
   socket.setsockopt(ZMQ_RCVTIMEO, 100);
@@ -60,7 +62,7 @@ zmq_source::run()
       // If there's a remainder
       if (type_size_div.rem)
       {
-        std::cout << "<zmq/source> Incomplete message." << std::endl;
+        logger.warning("Incomplete message.");
       }
 
       // Write the amount of IQ samples to the buffer
@@ -77,7 +79,7 @@ zmq_source::run()
   // context.close();
 
   // Output debug information
-  std::cout << "<zmq/source> Stopped socket." << std::endl;
+  logger.info("Stopped socket.");
 };
 
 
@@ -93,6 +95,8 @@ zmq_sink::zmq_sink(std::shared_ptr<hydra_buffer<iq_sample>> input_buffer,
 {
   // Create a thread to receive the data
   g_rx_thread = std::make_unique<std::thread>(&zmq_sink::run, this);
+
+  logger = hydra_log("zmq|sink");
 };
 
 void
@@ -110,7 +114,7 @@ zmq_sink::run()
 {
   // Construct the URI
   std::string addr = "tcp://" + s_host + ":" + s_port;
-  std::cout << "<zmq/sink> Local server address: " << addr << std::endl;
+  logger.info("Local server address: " + addr);
 
   // Set timeout for send operation
   socket.setsockopt(ZMQ_SNDTIMEO, 100);
@@ -159,7 +163,7 @@ zmq_sink::run()
   // context.close();
 
   // Output debug information
-  std::cout << "<zmq/sink> Stopped socket." << std::endl;
+  logger.info("Stopped socket.");
 }
 
 tcp_sink::tcp_sink(

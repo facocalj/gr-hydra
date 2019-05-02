@@ -22,6 +22,7 @@
 
 #include <hydra/types.h>
 #include <hydra/hydra_fft.h>
+#include <hydra/hydra_log.h>
 #include <hydra/hydra_virtual_radio.h>
 #include "hydra/hydra_uhd_interface.h"
 
@@ -90,7 +91,8 @@ class Hypervisor
       stop_rx();
     }
 
-    std::cout << "Stopped the Hypervisor service" << std::endl;
+
+    logger.info("Stopped the Hypervisor service");
   }
 
   // TX related methods
@@ -149,6 +151,8 @@ private:
   iq_map_vec g_rx_subcarriers_map; // mapping of subcarriers
   uhd_hydra_sptr g_rx_dev;
   bool b_rx_chain;
+
+  hydra_log logger;
 
   // Stop the process loop and join RX thread
   void stop_rx()

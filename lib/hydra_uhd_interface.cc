@@ -5,8 +5,10 @@ namespace hydra {
 
 device_uhd::device_uhd(std::string device_args)
 {
-   std::cout <<  "Creating USRP with args \"" <<  device_args << "\"" << std::endl;
-   usrp = uhd::usrp::multi_usrp::make(device_args);
+  logger = hydra_log("backend|usrp");
+
+  logger.info("Creating USRP with args \"" +  device_args + "\"");
+  usrp = uhd::usrp::multi_usrp::make(device_args);
 }
 
 void
@@ -35,17 +37,17 @@ device_uhd::set_tx_config(double freq, double rate, double gain)
 {
   abstract_device::set_tx_config(freq, rate, gain);
 
-  std::cout << "Setting TX Rate: " << rate << std::endl;
+  logger.info("Setting TX Rate: " + std::to_string(rate));
   usrp->set_tx_rate(rate);
-  std::cout << "Actual TX Rate: " << usrp->get_tx_rate() << std::endl;
+  logger.info("Actual TX Rate: " + std::to_string(usrp->get_tx_rate()));
 
-  std::cout << "Setting TX Gain: " << gain << std::endl;
+  logger.info("Setting TX Gain: " + std::to_string(gain));
   usrp->set_normalized_tx_gain(gain);
-  std::cout << "Actual TX Gain: " << usrp->get_tx_gain() << std::endl;
+  logger.info("Actual TX Gain: " + std::to_string(usrp->get_tx_gain()));
 
-  std::cout << "Setting TX freq: " << freq / 1e6 << " MHz" << std::endl;
+  logger.info("Setting TX freq: " + std::to_string(freq/1e6) + " [MHz]");
   usrp->set_tx_freq(freq);
-  std::cout << "Actual TX freq: " << usrp->get_tx_freq()/1e6 << " MHz" << std::endl;
+  logger.info("Actual TX freq: " + std::to_string(usrp->get_tx_freq()/1e6) + " [MHz]");
 
   uhd::stream_args_t stream_args("fc32", "sc16");
   tx_stream = usrp->get_tx_stream(stream_args);
@@ -56,18 +58,17 @@ device_uhd::set_rx_config(double freq, double rate, double gain)
 {
   abstract_device::set_rx_config(freq, rate, gain);
 
-  std::cout << "Setting RX Rate: " << rate << std::endl;
+  logger.info("Setting RX Rate: " + std::to_string(rate));
   usrp->set_rx_rate(rate);
-  std::cout << "Actual RX Rate: " << usrp->get_rx_rate() << std::endl;
+  logger.info("Actual RX Rate: " + std::to_string(usrp->get_rx_rate()));
 
-  // no gain for reception.
-  std::cout << "Setting RX Gain: " << gain << std::endl;
+  logger.info("Setting RX Gain: " + std::to_string(gain));
   usrp->set_normalized_rx_gain(0.0);
-  std::cout << "Actual RX Gain: " << usrp->get_rx_gain() << std::endl;
+  logger.info("Actual RX Gain: " + std::to_string(usrp->get_rx_gain()));
 
-  std::cout << "Setting RX freq: " << freq / 1e6 << " MHz" << std::endl;
+  logger.info("Setting RX freq: " + std::to_string(freq/1e6) + " [MHz]");
   usrp->set_rx_freq(freq);
-  std::cout << "Actual RX freq: " << usrp->get_rx_freq()/1e6 << " MHz" << std::endl;
+  logger.info("Actual RX freq: " + std::to_string(usrp->get_rx_freq()/1e6) + " [MHz]");
 
 
   uhd::stream_args_t stream_args("fc32"); //complex floats
@@ -166,6 +167,7 @@ device_uhd::receive(iq_window &buf, size_t len)
 
 device_image_gen::device_image_gen(std::string device_args)
 {
+  logger = hydra_log("backend|image");
 }
 
 void
@@ -212,7 +214,7 @@ device_image_gen::send(const iq_window &buf, size_t len)
          }
       }
 
-      std::cout << "Saving image: ./watterfall_" << std::to_string(img_counter) << ".png" << std::endl;
+      logger.info("Saving immage: ./watterfall_" + std::to_string(img_counter) + ".png");
       cv::imwrite(std::string("./waterfall_" + std::to_string(img_counter++) + ".png"), img);
       g_iq_samples.clear();
    }
@@ -230,7 +232,7 @@ device_image_gen::receive(iq_window &buf, size_t len)
   }
   else
   {
-    std::cout << "Reseting file" << std::endl;
+    logger.info("Reseting file");
     infile.clear();
     infile.seekg(0);
     infile.read((char*)&buf.front(), len * sizeof(iq_sample));
@@ -239,6 +241,7 @@ device_image_gen::receive(iq_window &buf, size_t len)
 
 device_loopback::device_loopback(std::string device_args)
 {
+  logger = hydra_log("backend|loop");
 }
 
 void
@@ -265,6 +268,8 @@ device_file::device_file(std::string file_name)
 {
   // Get the file name
   s_file_name = file_name;
+
+  logger = hydra_log("backend|file");
 }
 
 void
@@ -273,7 +278,7 @@ device_file::set_tx_config(double freq, double rate, double gain)
   // Get the TX sampling rate
   tx_rate = rate;
 
-  std::cout << "<banckend/file> Limiting write to " << rate << "samples/second." << std::endl;
+  logger.info("Limiting write to " + std::to_string(rate) + "samples/second.");
 
   // Congigure the output stream
   output_file_stream.open(s_file_name, std::ios::out | std::ios::binary | std::ios::trunc);
@@ -285,7 +290,7 @@ device_file::set_rx_config(double freq, double rate, double gain)
   // Get the RX sampling rate
   rx_rate = rate;
 
-  std::cout << "<banckend/file> Limiting read to " << rate << "samples/second." << std::endl;
+  logger.info("Limiting read to " + std::to_string(rate) + "samples/second.");
 
   // Configure the input stream
   input_file_stream.open(s_file_name, std::ios::in| std::ios::binary);
@@ -321,6 +326,7 @@ device_network::device_network(std::string host_addr, std::string remote_addr):
   g_host_addr(host_addr),
   g_remote_addr(remote_addr)
 {
+  logger = hydra_log("backend|network");
 }
 
 void
@@ -333,7 +339,7 @@ device_network::send(const iq_window &buf, size_t len)
     socket_tx = std::make_unique<zmq::socket_t>(context, ZMQ_PUSH);
 
     std::string addr = "tcp://" + g_host_addr + ":" + std::to_string(PORT);
-    std::cout << "device_network recv:" << addr << std::endl;
+    logger.debug("device_network recv:" + addr);
 
     socket_tx->connect("tcp://" + addr);
     init_tx = true;
@@ -358,7 +364,7 @@ device_network::receive(iq_window &buf, size_t len)
     socket_rx = std::make_unique<zmq::socket_t>(context, ZMQ_PULL);
 
     std::string addr = "tcp://" + g_remote_addr + ":" + std::to_string(PORT);
-    std::cout << "device_network recv:" << addr << std::endl;
+    logger.debug("device_network recv:" + addr);
 
     socket_rx->connect(addr);
     init_rx = true;
@@ -368,14 +374,14 @@ device_network::receive(iq_window &buf, size_t len)
   socket_rx->recv(&message);
 
   if  (message.size() != len)
-    std::cout << "Error: message size does not equal to len" << std::endl;
+    logger.warning("Message size does not equal to len");
 
   if (message.size() > 0)
   {
     iq_sample *tmp = static_cast<iq_sample *>(message.data());
 
     if (message.size() % sizeof(iq_sample) != 0)
-      std::cout << "Error: message not complete" << std::endl;
+      logger.warning("Message not complete");
 
     buf.insert(buf.begin(),
         tmp,

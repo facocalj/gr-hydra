@@ -10,6 +10,8 @@ HydraCore::HydraCore()
    // Initialise the resource manager
    p_resource_manager = std::make_unique<xvl_resource_manager>();
    p_hypervisor = std::make_unique<Hypervisor>();
+
+   logger = hydra_log("core");
 }
 
 void
@@ -60,7 +62,7 @@ HydraCore::request_rx_resources(unsigned int u_id,
   if (not b_receiver)
   {
     // Return error -- zero is bad
-    std::cout << "<core> RX Resources not configured." << std::endl;
+    logger.error("RX Resources not configured.");
     return 0;
   }
 
@@ -98,7 +100,7 @@ HydraCore::request_rx_resources(unsigned int u_id,
   vr->set_rx_chain(u_udp_port, d_centre_freq, d_bandwidth, server_addr, remote_addr);
 
    // If able to create all of it, return the port number
-  std::cout << "<core> RX Resources allocated successfully." << std::endl;
+  logger.info("RX Resources allocated successfully.");
   return u_udp_port++;
 }
 
@@ -115,7 +117,7 @@ HydraCore::request_tx_resources(unsigned int u_id,
   if (not b_transmitter)
   {
     // Return error -- zero is bad
-    std::cout << "<core> TX Resources not configured." << std::endl;
+    logger.error("<core> TX Resources not configured.");
     return 0;
   }
 
@@ -156,7 +158,7 @@ HydraCore::request_tx_resources(unsigned int u_id,
   }
 
   // If able to create all of it, return the port number
-  std::cout << "<core> TX Resources allocated successfully." << std::endl;
+  logger.info("TX Resources allocated successfully.");
   return u_udp_port++;
 }
 
@@ -230,8 +232,8 @@ HydraCore::query_resources()
 // Deletes a given virtual radio
 int
 HydraCore::free_resources(size_t radio_id)
-{
-  std::cout << "<core> Freeing resources for radio: " << radio_id << std::endl;
+{
+  logger.info("Freeing resources for radio: " + std::to_string(radio_id));
   p_resource_manager->free_rx_resources(radio_id);
   p_resource_manager->free_tx_resources(radio_id);
   auto vr = p_hypervisor->get_vradio(radio_id);
@@ -240,7 +242,7 @@ HydraCore::free_resources(size_t radio_id)
 
   p_hypervisor->detach_virtual_radio(radio_id);
 
-  std::cout << "<core> Freed resources for radio: " << radio_id << std::endl;
+  logger.info("Freed resources for radio: " + std::to_string(radio_id));
   return 1;
 }
 

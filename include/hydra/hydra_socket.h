@@ -15,6 +15,7 @@
 
 #include "hydra/types.h"
 #include "hydra/hydra_buffer.hpp"
+#include "hydra/hydra_log.h"
 
 // Using name space UDP
 using boost::asio::ip::udp;
@@ -64,6 +65,8 @@ class zmq_source
     // Thread stop condition
     bool g_th_run;
 
+    hydra_log logger;
+
     // Thread to handle the receiving of datagrams
     std::unique_ptr<std::thread> g_rx_thread;
     // ZMQ-related primitives
@@ -105,6 +108,9 @@ class zmq_sink
 
     // Thread stop condition
     bool g_th_run;
+
+    hydra_log logger;
+
     // Thread to handle the receiving of datagrams
     std::unique_ptr<std::thread> g_rx_thread;
 

@@ -40,6 +40,8 @@ Hypervisor::Hypervisor(size_t _fft_m_len,
 
   // Set chains to undefined
   b_tx_chain = b_rx_chain = false;
+
+  logger = hydra_log("hypervisor");
 };
 
 size_t
@@ -190,7 +192,7 @@ Hypervisor::tx_run()
   }
 
   // Print debug message
-  // std::cout << "Stopped hypervisor's transmitter chain" << std::endl;
+  // logger.info("Stopped hypervisor's transmitter chain");
 }
 
 void
@@ -203,7 +205,7 @@ Hypervisor::set_tx_mapping()
         it != g_vradios.end();
         ++it)
      {
-        std::cout << "<hypervisor> TX setting map for VR " << (*it)->get_id() << std::endl;
+        logger.debug("TX setting map for VR " + std::to_string((*it)->get_id()));
         set_tx_mapping(*((*it).get()), subcarriers_map);
      }
      g_tx_subcarriers_map = subcarriers_map;
@@ -227,9 +229,9 @@ Hypervisor::set_tx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
    double c_bw = fft_n*g_tx_bw/tx_fft_len;
    double c_cf = g_tx_cf - g_tx_bw/2 + (g_tx_bw/tx_fft_len) * (sc + (fft_n/2));
 
-   std::cout << boost::format("<hypervisor> TX Request VR BW: %1%, CF: %2% ") % vr_bw % vr_cf << std::endl;
-   std::cout << boost::format("<hypervisor> TX Actual  VR BW: %1%, CF: %2% ") % c_bw % c_cf << std::endl;
-   std::cout << "<hypervisor> Created vRF for #" << vr.get_id() << ": CF @" << vr_cf << ", BW @" << vr_bw << ", Offset @" << offset << ", First SC @ " << sc << ". Last SC @" << sc + fft_n << std::endl;
+   logger.debug(str(boost::format("TX Request VR BW: %1%, CF: %2% ") % vr_bw % vr_cf));
+   logger.debug(str(boost::format("TX Actual  VR BW: %1%, CF: %2% ") % c_bw % c_cf));
+   logger.info("Created vRF for #" + std::to_string(vr.get_id()) + ": CF @" +std::to_string(vr_cf) + ", BW @" + std::to_string(vr_bw) + ", Offset @" + std::to_string(offset) + ", First SC @ " + std::to_string(sc) + ". Last SC @" + std::to_string(sc + fft_n));
 
    // Allocate subcarriers sequentially from sc
    iq_map_vec the_map;
@@ -312,7 +314,7 @@ Hypervisor::rx_run()
   }
 
   // Print debug message
-  // std::cout << "<hypervisor> Stopped hypervisor's receiver chain" << std::endl;
+  // logger.info("Stopped hypervisor's receiver chain");
 }
 
 void
@@ -327,7 +329,7 @@ Hypervisor::set_rx_mapping()
        it != g_vradios.end();
        ++it)
     {
-      std::cout << "<hypervisor> RX setting map for VR " << (*it)->get_id() << std::endl;
+      logger.debug("RX setting map for VR " + std::to_string((*it)->get_id()));
       set_rx_mapping(*((*it).get()), subcarriers_map);
     }
   g_rx_subcarriers_map = subcarriers_map;
@@ -354,9 +356,9 @@ Hypervisor::set_rx_mapping(VirtualRadio &vr, iq_map_vec &subcarriers_map)
    double c_bw = fft_n*g_rx_bw/rx_fft_len;
    double c_cf = g_rx_cf - g_rx_bw/2 + (g_rx_bw/rx_fft_len) * (sc + (fft_n/2));
 
-   std::cout << boost::format("<hypervisor> RX Request VR BW: %1%, CF: %2% ") % vr_bw % vr_cf << std::endl;
-   std::cout << boost::format("<hypervisor> RX Actual  VR BW: %1%, CF: %2% ") % c_bw % c_cf << std::endl;
-   std::cout << "<hypervisor> Created vRF for #" << vr.get_id() << ": CF @" << vr_cf << ", BW @" << vr_bw << ", Offset @" << offset << ", First SC @ " << sc << ". Last SC @" << sc + fft_n << std::endl;
+   logger.debug(str(boost::format("RX Request VR BW: %1%, CF: %2% ") % vr_bw % vr_cf));
+   logger.debug(str(boost::format("RX Actual  VR BW: %1%, CF: %2% ") % c_bw % c_cf));
+   logger.info("Created vRF for #" + std::to_string(vr.get_id()) + ": CF @" +std::to_string(vr_cf) + ", BW @" + std::to_string(vr_bw) + ", Offset @" + std::to_string(offset) + ", First SC @ " + std::to_string(sc) + ". Last SC @" + std::to_string(sc + fft_n));
 
    // Allocate subcarriers sequentially from sc
    iq_map_vec the_map;

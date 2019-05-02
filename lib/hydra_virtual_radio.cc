@@ -30,6 +30,7 @@ VirtualRadio::VirtualRadio(size_t _idx, Hypervisor *hypervisor):
    g_rx_udp_port(0),
    g_tx_udp_port(0)
 {
+  logger = hydra_log("VR #" + std::to_string(g_idx));
 }
 
 

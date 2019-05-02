@@ -27,6 +27,7 @@
 #include <hydra/hydra_resampler.hpp>
 #include <hydra/hydra_hypervisor.h>
 #include <hydra/hydra_fft.h>
+#include <hydra/hydra_log.h>
 #include <hydra/hydra_uhd_interface.h>
 #include <hydra/hydra_stats.h>
 
@@ -52,16 +53,16 @@ class VirtualRadio
         tx_resampler->stop();
         tx_socket->stop();
 
-        std::cout << "<VR #" << g_idx << "> Stopped TX chain." << std::endl;
+        logger.info("Stopped TX chain.");
       }
       // If receiving
       if (b_receiver)
       {
         // Stop resampler and socket loops
-       rx_resampler->stop();
-       rx_socket->stop();
+        rx_resampler->stop();
+        rx_socket->stop();
 
-       std::cout << "<VR #" << g_idx << "> Stopped RX chain." << std::endl;
+        logger.info("Stopped RX chain.");
       }
     };
 
@@ -136,6 +137,8 @@ class VirtualRadio
 
     int g_idx;        // Radio unique ID
     std::mutex g_mutex;
+
+    hydra_log logger;
 
     // pointer to this VR hypervisor
     Hypervisor *p_hypervisor;

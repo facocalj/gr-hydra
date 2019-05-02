@@ -5,6 +5,7 @@
 #include <chrono>
 
 #include "hydra/hydra_buffer.hpp"
+#include "hydra/hydra_log.h"
 #include "hydra/types.h"
 
 
@@ -18,6 +19,8 @@ class resampler
     std::shared_ptr<hydra_buffer<input_data_type>> p_input_buffer;
     // Inernal buffer object
     std::shared_ptr<hydra_buffer<output_data_type>> p_output_buffer;
+
+    hydra_log logger;
 
     // Event loop thread
     std::unique_ptr<std::thread> run_thread;
@@ -86,8 +89,9 @@ resampler<input_data_type, output_data_type>::resampler(
   // Create a thread to receive the data
   run_thread = std::make_unique<std::thread>(&resampler::run, this);
 
-  std::cout << "<resampler> Created resampler" << std::endl;
+  logger = hydra_log("resampler");
 
+  logger.info("Created resampler");
 };
 
 

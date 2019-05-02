@@ -42,7 +42,14 @@ find_library(
 )
 
 # Find Boost
-find_package(Boost "1.58" COMPONENTS system filesystem program_options REQUIRED)
+find_package(Boost "1.58" COMPONENTS
+  system
+  filesystem
+  program_options
+  log
+  log_setup REQUIRED)
+
+ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
 
 # Include the project's directories
 include_directories(include)

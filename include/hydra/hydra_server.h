@@ -2,6 +2,7 @@
 #define HYDRA_SERVER_INCLUDE_H
 
 #include "hydra/hydra_core.h"
+#include "hydra/hydra_log.h"
 #include "hydra/util/udp.h"
 
 #include <string>
@@ -37,38 +38,40 @@ struct xvl_info
 
 class HydraServer
 {
-public:
-   /* CTOR */
-   HydraServer(
-       std::string server_addr,
-       std::string group_name,
-       std::shared_ptr<HydraCore> core);
+  public:
+    /* CTOR */
+    HydraServer(
+      std::string server_addr,
+      std::string group_name,
+      std::shared_ptr<HydraCore> core);
 
-   /* Run the server */
-   int run();
+    /* Run the server */
+    int run();
 
-   /* Run auto discovery service */
-   int auto_discovery();
+    /* Run auto discovery service */
+    int auto_discovery();
 
-   std::unique_ptr<bool> p_stop;
+    std::unique_ptr<bool> p_stop;
 
-   // Toggle server stop flag
-   void stop()
-   {
-     thr_stop = true;
-   };
+    // Toggle server stop flag
+    void stop()
+    {
+      thr_stop = true;
+    };
 
-private:
-   // Struct with the server info
-   xvl_info server_info;
-   // Server ip:port
-   std::string s_server_addr;
-   // Serge group
-   std::string s_group;
-   // Pointer to ther XVL Core
-   std::shared_ptr<HydraCore> p_core;
+  private:
+    // Struct with the server info
+    xvl_info server_info;
+    // Server ip:port
+    std::string s_server_addr;
+    // Serge group
+    std::string s_group;
+    // Pointer to ther XVL Core
+    std::shared_ptr<HydraCore> p_core;
 
-   bool thr_stop;
+    hydra_log logger;
+
+    bool thr_stop;
 };
 
 

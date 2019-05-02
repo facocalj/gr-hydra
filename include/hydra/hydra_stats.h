@@ -11,6 +11,7 @@
 
 
 #include "hydra/types.h"
+#include "hydra/hydra_log.h"
 
 namespace hydra {
 
@@ -24,6 +25,8 @@ class xvl_monitor
   void start();
   // Stats thread
   std::unique_ptr<std::thread> stats_thread;
+
+  hydra_log logger;
 
  public:
   // Constructor

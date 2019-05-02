@@ -5,6 +5,7 @@
 
 #include "hydra/hydra_server.h"
 #include "hydra/hydra_core.h"
+#include "hydra/hydra_log.h"
 #include "hydra/hydra_stats.h"
 #include "hydra/types.h"
 
@@ -50,7 +51,7 @@ private:
    // Pointer to the XVL Statistics monitor
    std::shared_ptr<xvl_monitor> monitor;
 
-
+  hydra_log logger;
 
 };
 

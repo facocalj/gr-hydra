@@ -2,6 +2,7 @@
 #define INCLUDED_HYDRA_UHD_INTERFACE_H
 
 #include "hydra/hydra_fft.h"
+#include "hydra/hydra_log.h"
 #include "hydra/types.h"
 
 #include <uhd/usrp/multi_usrp.hpp>
@@ -60,6 +61,8 @@ class abstract_device
   double g_rx_freq;
   double g_rx_rate;
   double g_rx_gain;
+
+  hydra_log logger;
 };
 
 

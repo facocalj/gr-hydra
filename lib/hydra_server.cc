@@ -17,6 +17,8 @@ HydraServer::HydraServer(std::string server_addr,
 
   thr_stop = false;
 
+  logger = hydra_log("server");
+
   // Change the server status
   server_info.s_status = "Idle";
 }
@@ -24,49 +26,51 @@ HydraServer::HydraServer(std::string server_addr,
 int
 HydraServer::auto_discovery()
 {
-   const int MAX_MSG = 100;
-   char msg[MAX_MSG];
+  const int MAX_MSG = 100;
+  char msg[MAX_MSG];
 
-   std::vector<std::string> client_info;
+  std::vector<std::string> client_info;
 
-   int rx_port = 5001;
-   int tx_port = 5002;
+  int rx_port = 5001;
+  int tx_port = 5002;
 
-   std::cout << "<server/autodiscovery> Waiting for data on port UDP " <<  rx_port << std::endl;
+  hydra_log ad_logger("server|audodiscovery");
 
-   // Check receive status
-   int rcv = 0;
-   // Event loop stop condition
-   while (not thr_stop)
-   {
-      rcv = recv_udp(msg, MAX_MSG, true, rx_port, {1, 0});
+  ad_logger.info("Waiting for data on port UDP " + std::to_string(rx_port));
 
-      if (rcv != -1)
+  // Check receive status
+  int rcv = 0;
+  // Event loop stop condition
+  while (not thr_stop)
+  {
+    rcv = recv_udp(msg, MAX_MSG, true, rx_port, {1, 0});
+
+    if (rcv != -1)
+    {
+      // Split the received message
+      boost::split(client_info, msg, boost::is_any_of(":"));
+
+      // If the message was not formatted properly
+      if (client_info.size() != 2)
       {
-        // Split the received message
-        boost::split(client_info, msg, boost::is_any_of(":"));
+        ad_logger.info("Received malformed message: " + std::string(msg));
+      }
+      // If we received a message from the same group
+      else if (s_group == client_info[0])
+      {
+        // Return message
+        send_udp(client_info[1], s_server_addr, false, tx_port);
+      }
+      else
+      {
+        ad_logger.info("Received message from wrong group: " + std::string(client_info[0]));
+      }
 
-        // If the message was not formatted properly
-        if (client_info.size() != 2)
-        {
-          std::cout << "<server/autodiscovery> Received malformed message: " << msg <<std::endl;
-        }
-        // If we received a message from the same group
-        else if (s_group == client_info[0])
-        {
-          // Return message
-          send_udp(client_info[1], s_server_addr, false, tx_port);
-        }
-        else
-        {
-          std::cout << "<server/autodiscovery> Received message from wrong group: " << client_info[0] << std::endl;
-        }
+    } // End RECV checl
+  } // End loop
 
-      } // End RECV checl
-   } // End loop
-
-   // Output debug information
-   // std::cout << "<server/audodiscovery> Stopped autodiscovery" << std::endl;
+  // Output debug information
+  // ad_logger.info("Stopped autodiscovery");
 }
 
 // Run the server
@@ -123,7 +127,7 @@ HydraServer::run()
       else
       {
         // Output real error mesage
-        std::cout << "<server> ZMQ Error. " << e.what() << std::endl;
+        logger.error("ZMQ Error. " + std::string(e.what()));
       }
     }
 
@@ -134,7 +138,7 @@ HydraServer::run()
       std::stringstream ss; ss << std::string(static_cast<char*>(request.data()),
                                            request.size());
 
-      std::cout << "<server> Request: " << std::string(static_cast<char*>(request.data()), request.size()) << std::endl;
+      logger.debug("Request: " + std::string(static_cast<char*>(request.data()), request.size()));
 
       // Create output JSON tree
       boost::property_tree::ptree output_tree;
@@ -161,12 +165,12 @@ HydraServer::run()
 
       // Extract key from the JSON tree
       std::string key = root.front().first;
-      // std::cout << "key: " << key << std::endl;
+      // logger.debug("key: " + key);
 
       // Sync message, reply with status
       if (boost::iequals(key, "xvl_syn"))
       {
-        std::cout << "<server> XVL Sync Message" << std::endl;
+        logger.debug("XVL Sync Message");
 
         // Add the content
         content.put("status", true);
@@ -177,7 +181,7 @@ HydraServer::run()
       // Query message, reply with the current allocation
       else if (boost::iequals(key , "xvl_que"))
       {
-        std::cout << "<server> XVL Query Message" << std::endl;
+        logger.debug("XVL Query Message");
 
         // Add the content
         content.put("status", true);
@@ -189,7 +193,7 @@ HydraServer::run()
       else if (boost::iequals(key, "xvl_rrx") or
                boost::iequals(key, "xvl_rtx"))
       {
-        std::cout << "<server> XVL Request Message" << std::endl;
+        logger.debug("XVL Request Message");
 
         // Extract the request arguments
         double d_cf = root.get(key + ".centre_freq", 0.0);
@@ -248,17 +252,14 @@ HydraServer::run()
       // Free message, try to free resources and reply the result
       else if (boost::iequals(key, "xvl_fre"))
       {
-        std::cout << "<server> XVL Free Message" << std::endl;
+        logger.debug("XVL Free Message");
 
         // Extract the request arguments
         unsigned int u_id = root.get("xvl_fre.id", 0);
 
-        std::cout << "<server> u_id:" << u_id << std::endl;
-
         // Check if they are invalid
         if (not u_id)
         {
-          std::cout << "<server> not u_id:" << u_id << std::endl;
           // Add the content
           content.put("status", false);
           content.put("message","Missing or invalid parameters.");
@@ -269,7 +270,6 @@ HydraServer::run()
         else
         {
           // Try to reserve resources
-          std::cout << "<server>: calling p_core->free_resources" << std::endl;
           if ( not p_core->free_resources(u_id))
           {
             // Add the content
@@ -291,7 +291,7 @@ HydraServer::run()
       // Otherwise, unknown message
       else
       {
-        std::cout << "<server> Unknown Message. Rejecting" << std::endl;
+        logger.warning("Unknown Message. Rejecting");
         // Add the content
         content.put("status", false);
         content.put("message","Unknown message: " + key);
@@ -311,7 +311,7 @@ HydraServer::run()
       boost::erase_all(response_message, "\n");
       boost::erase_all(response_message, " ");
 
-      std::cout << "<server> Reply: " << response_message << std::endl;
+      logger.debug("Reply: " + response_message);
 
       //  Send reply back to client
       zmq::message_t reply(response_message.size());
@@ -329,7 +329,7 @@ HydraServer::run()
   autod.join();
 
   // Output message when server stops
-  std::cout << "<server> Stopped XVL Server" << std::endl;
+  logger.info("Stopped XVL Server");
 
   return 0;
 }
