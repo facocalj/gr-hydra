@@ -151,16 +151,18 @@ hydra_client::request_tx_resources(rx_configuration &tx_conf)
 }
 
 std::string
-hydra_client::check_connection()
+hydra_client::check_connection(size_t max_tries)
 {
-  // If printing debug messages
-  if (b_debug_flag)
-  {
-    // Print the response data
-    std::cout << "<client> Checking connection" << std::endl;
-  }
+   size_t tries = 0;
+   int status;
 
-  while (discover_server(s_client_host, s_server_host) < 0) sleep(1);
+   while ( (status = discover_server(s_client_host, s_server_host)) < 0 &&
+           (tries++ < max_tries))
+   {
+     if (status < 0 && tries >= max_tries) return std::string("");
+
+     sleep(1);
+   }
 
   // Set message type
   std::string message = "{\"xvl_syn\":\"\"}";
